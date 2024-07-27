@@ -15,7 +15,7 @@ class Autohack < Sandbox::Script
     n = 0
     @game.world.load
     targets = @game.world.targets
-    @logger.log("Loaded #{targets.size} targets")
+    @logger.log("Loaded #{targets.count} targets")
 
     targets.each do |target|
       k = target.id
@@ -105,4 +105,3 @@ class Autohack < Sandbox::Script
       end
     end
   end
-end
