@@ -127,11 +127,7 @@ CONTEXT_CHAT_SAY.completion do |line|
 end
 
 # talk
-CONTEXT_CHAT_TALK = CONTEXT_CHAT.add_command(
-  :talk,
-  description: 'Talk in the room',
-  params: ['<room>']
-) do |tokens, shell|
+CONTEXT_CHAT_TALK = CONTEXT_CHAT.add_command(:talk, description: 'Talk in the room', params: ['<room>']) do |tokens, shell|
   room = tokens[1].to_i
   unless CHAT_ROOMS.key?(room)
     shell.puts('No such opened room')
@@ -146,6 +142,19 @@ CONTEXT_CHAT_TALK = CONTEXT_CHAT.add_command(
       shell.puts
       break
     end
+
+    if message.strip.upcase == 'SPAM'
+      10.times do
+        chat.write(room, 'THIS WORLD ITS MY')
+        chat_log(shell, room, [ChatMessage.new(message: 'THIS WORLD ITS MY', experience: 1)])
+        sleep(3)
+      end
+    else
+      chat.write(room, message)
+      chat_log(shell, room, [ChatMessage.new(message: message, experience: 1)])
+    end
+  end
+end
 
     message.strip!
     next if message.empty?
