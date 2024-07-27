@@ -5,6 +5,34 @@ class Trickster
     # Definición de la clase RequestError
     class RequestError < StandardError
     end
+
+    # Definición de la clase Game
+    class Game
+      # Definición del método cmdPlayerSetName
+      def cmdPlayerSetName(id, name)
+        # Implementación del método para cambiar el nombre de un jugador
+        # Por ejemplo:
+        puts "Cambiando nombre de jugador #{id} a #{name}"
+      end
+
+      # Definición del método check_connectivity
+      def check_connectivity
+        # Implementación del método para verificar la conectividad
+        # Por ejemplo:
+        puts "Verificando conectividad..."
+      end
+    end
+  end
+end
+
+# Definición de la clase Sandbox
+class Sandbox
+  # Definición de la clase Script
+  class Script
+    # Definición del método main
+    def main
+      # Implementación del método main
+    end
   end
 end
 
