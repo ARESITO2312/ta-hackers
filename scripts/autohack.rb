@@ -8,7 +8,7 @@ module Hackers
     attr_accessor :world
 
     def initialize
-      @world = World.new
+      @world = Hackers::World.new
     end
 
     def cmdNetGetForAttack(target_id)
@@ -28,12 +28,10 @@ module Hackers
     end
 
     def cmdFightUpdate(target_id, options)
-      # Implementación para actualizar la lucha
       puts "Updating fight for target #{target_id}"
     end
 
     def cmdFight(target_id, options)
-      # Implementación para luchar
       puts "Fighting target #{target_id}"
     end
 
@@ -167,6 +165,8 @@ module Hackers
           sleep(rand(15..25))
         end
       end
+     end
     end
+   end
   end
 end
