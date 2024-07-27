@@ -128,48 +128,48 @@ end
 
 # talk
 CONTEXT_CHAT_TALK = CONTEXT_CHAT.add_command(:talk, description: 'Talk in the room', params: ['<room>']) do |tokens, shell|
+  LOGGER.info("Iniciando comando de chat en habitación #{tokens[1]}")
   room = tokens[1].to_i
   unless CHAT_ROOMS.key?(room)
     shell.puts('No such opened room')
-    next
+    LOGGER.error("Habitación #{room} no abierta")
+    return
   end
 
   shell.puts('Enter ! or press ^D to quit')
+  LOGGER.info("Iniciando loop de chat en habitación #{room}")
   loop do
     prompt = "#{GAME.countries_list.name(room)}:#{room} \e[1;33m\u2765\e[0m "
     message = shell.readline(prompt, true)
     if message.nil?
       shell.puts
+      LOGGER.info("Finalizando loop de chat en habitación #{room}")
       break
     end
 
-    if message.strip.upcase == 'SPAM'
+    message.strip!
+    LOGGER.debug("Mensaje recibido: #{message}")
+    if message.empty?
+      LOGGER.debug("Mensaje vacío, saltando")
+      next
+    elsif message == '!'
+      LOGGER.info("Finalizando loop de chat en habitación #{room} por comando de salida")
+      break
+    elsif message.upcase == 'SPAM'
+      LOGGER.info("Enviando spam en habitación #{room}")
       10.times do
         chat.write(room, 'THIS WORLD ITS MY')
         chat_log(shell, room, [ChatMessage.new(message: 'THIS WORLD ITS MY', experience: 1)])
         sleep(3)
       end
     else
+      LOGGER.info("Enviando mensaje en habitación #{room}: #{message}")
       chat.write(room, message)
       chat_log(shell, room, [ChatMessage.new(message: message, experience: 1)])
     end
   end
-end
-
-    message.strip!
-    next if message.empty?
-
-    break if message == '!'
-
-    messages = GAME.chat.write(room, message)
-    chat_log(shell, room, messages)
-  rescue Hackers::RequestError => e
-    LOGGER.error("Chat write (#{e})")
-  end
-end
-
-CONTEXT_CHAT_TALK.completion do |line|
-  CHAT_ROOMS.keys.map(&:to_s).grep(/^#{Regexp.escape(line)}/)
+rescue Hackers::RequestError => e
+  LOGGER.error("Error al enviar mensaje en habitación #{room}: #{e}")
 end
 
 # users
