@@ -105,3 +105,4 @@ class Autohack < Sandbox::Script
       end
     end
   end
+end
