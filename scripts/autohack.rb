@@ -1,9 +1,5 @@
-# frozen_string_literal: true
-
 class Autohack < Sandbox::Script
-  BLACKLIST = [
-    127
-  ]
+  BLACKLIST = [127]
 
   def main
     if @args[0].nil?
@@ -23,14 +19,14 @@ class Autohack < Sandbox::Script
     loop do
       targets.each do |target|
         next if BLACKLIST.include?(k)
+
         @logger.log("Attack #{target.id} / #{target.name}")
 
         begin
           net = @game.cmdNetGetForAttack(target.id)
           sleep(rand(4..9))
 
-          update = @game.cmdFightUpdate(
-            target.id,
+          update = @game.cmdFightUpdate(target.id,
             {
               money: 0,
               bitcoin: 0,
@@ -40,7 +36,6 @@ class Autohack < Sandbox::Script
               programs: ''
             }
           )
-
           sleep(rand(35..95))
 
           version = [
@@ -50,21 +45,20 @@ class Autohack < Sandbox::Script
           ].join(',')
 
           success = Hackers::Game::SUCCESS_CORE | Hackers::Game::SUCCESS_RESOURCES | Hackers::Game::SUCCESS_CONTROL
-          fight = @game.cmdFight(
-            target.id,
+
+          fight = @game.cmdFight(target.id,
             {
               money: net['profile'].money,
               bitcoin: net['profile'].bitcoins,
-              nodes: ''
-              loots: ''
+              nodes: '',
+              loots: '',
               success: success,
-              programs: ''
-              summary: ''
+              programs: '',
+              summary: '',
               version: version,
               replay: ''
             }
           )
-
           sleep(rand(5..12))
 
           leave = @game.cmdNetLeave(target.id)
@@ -77,6 +71,7 @@ class Autohack < Sandbox::Script
 
         n += 1
         return if n == @args[0].to_i
+
         sleep(rand(15..25))
       end
 
@@ -87,7 +82,6 @@ class Autohack < Sandbox::Script
           @logger.error('Get new targets timeout')
           retry
         end
-
         @logger.error("Get new targets (#{e})")
         return
       end
