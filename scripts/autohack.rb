@@ -15,73 +15,94 @@ class Autohack < Sandbox::Script
     n = 0
     @game.world.load
     targets = @game.world.targets
-    @logger.log("Loaded #{targets.count} targets")
+    @logger.log("Loaded #{targets.size} targets")
 
     targets.each do |target|
-      k = target_id
+      k = target.id
       @logger.log("Target ID: #{k}")
 
       next if BLACKLIST.include?(k)
+      # ...
+    end
 
-      # Obtener el nombre del jugador
-      player_name = @game.player.name(k)
-      @logger.log("Target Name: #{player_name}")
+    loop do
+      targets.each do |target|
+        k = target.id
+        @logger.log("Attacking target ID: #{k}")
 
-      # Atacar al jugador
-      attack_target(k, player_name)
+        next if BLACKLIST.include?(k)
+
+        @logger.log("Attack #{target.id} / #{target.name}")
+        begin
+          net = @game.cmdNetGetForAttack(target.id)
+          @logger.log("Got net for attack")
+
+          sleep(rand(4..9))
+
+          update = @game.cmdFightUpdate(target.id, { 
+            money: 0, 
+            bitcoin: 0, 
+            nodes: '', 
+            loots: '', 
+            success: Hackers::Game::SUCCESS_FAIL, 
+            programs: '' 
+          } )
+          @logger.log("Updated fight")
+
+          sleep(rand(35..95))
+
+          version = [ 
+            @game.config['version'], 
+            @game.app_settings.get('node types'), 
+            @game.app_settings.get('program types'), 
+          ].join(',')
+          @logger.log("Version: #{version}")
+
+          success = Hackers::Game::SUCCESS_CORE | Hackers::Game::SUCCESS_RESOURCES | Hackers::Game::SUCCESS_CONTROL
+          fight = @game.cmdFight(target.id, { 
+            money: net['profile'].money, 
+            bitcoin: net['profile'].bitcoins, 
+            nodes: '', 
+            loots: '', 
+            success: success, 
+            programs: '', 
+            summary: '', 
+            version: version, 
+            replay: '' 
+          } )
+          @logger.log("Fought")
+
+          sleep(rand(5..12))
+
+          leave = @game.cmdNetLeave(target.id)
+          @logger.log("Left network")
+
+          @game.player.load
+        rescue => e
+          @logger.error(e)
+          @logger.log("Error attacking target ID: #{k}")
+          sleep(rand(165..295))
+          next
+        end
+
+        n += 1
+        @logger.log("Attack count: #{n}")
+
+        return if n == @args[0].to_i
+
+        sleep(rand(15..25))
+      end
+
+      begin
+        targets.new
+      rescue Hackers::RequestError => e
+        if e.type == 'Net::ReadTimeout'
+          @logger.error('Get new targets timeout')
+          retry
+        end
+        @logger.error("Get new targets (#{e})")
+        return
+      end
     end
   end
-
-  def attack_target(target_id, player_name)
-    @logger.log("Attacking target ID: #{target_id} - #{player_name}")
-
-    begin
-      # Intentar obtener la red para atacar
-      net = @game.cmdNetGetForAttack(target_id)
-      @logger.log("Got net for attack: #{net.inspect}")
-
-      # Actualizar la lucha
-      update = @game.cmdFightUpdate(target_id, { 
-        money: 0, 
-        bitcoin: 0, 
-        nodes: '', 
-        loots: '', 
-        success: Hackers::Game::SUCCESS_FAIL, 
-        programs: '' 
-      } )
-      @logger.log("Updated fight: #{update.inspect}")
-
-      # Luchar
-      version = [ 
-        @game.config['version'], 
-        @game.app_settings.get('node types'), 
-        @game.app_settings.get('program types'), 
-      ].join(',')
-      @logger.log("Version: #{version}")
-
-      success = Hackers::Game::SUCCESS_CORE | Hackers::Game::SUCCESS_RESOURCES | Hackers::Game::SUCCESS_CONTROL
-      fight = @game.cmdFight(target_id, { 
-        money: net['profile'].money, 
-        bitcoin: net['profile'].bitcoins, 
-        nodes: '', 
-        loots: '', 
-        success: success, 
-        programs: '', 
-        summary: '', 
-        version: version, 
-        replay: '' 
-      } )
-      @logger.log("Fought: #{fight.inspect}")
-
-      # Dejar la red
-      leave = @game.cmdNetLeave(target_id)
-      @logger.log("Left network: #{leave.inspect}")
-
-      @game.player.load
-    rescue => e
-      @logger.error(e)
-      @logger.log("Error attacking target ID: #{target_id} - #{player_name}")
-      sleep(rand(165..295))
-    end
-  end
-end 
+end
