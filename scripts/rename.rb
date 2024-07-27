@@ -25,8 +25,8 @@ class Trickster
   end
 end
 
-# Definición de la clase Sandbox
-class Sandbox
+# Definición de la clase Scripting
+class Scripting
   # Definición de la clase Script
   class Script
     # Definición del método main
@@ -36,10 +36,10 @@ class Sandbox
   end
 end
 
-# Definición de la clase Rename
-class Rename < Sandbox::Script
+# Definición de la clase RenamePlayer
+class RenamePlayer < Scripting::Script
   def main
-    @logger.log("Iniciando script Rename")
+    @logger.log("Iniciando script RenamePlayer")
 
     if @args[0].nil?
       @logger.log("Error: ID no especificado")
