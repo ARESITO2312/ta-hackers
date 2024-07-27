@@ -24,7 +24,7 @@ class Autohack < Sandbox::Script
         @logger.log("Target ID: #{k}")
 
         next if BLACKLIST.include?(k)
-        next if target.nil? || (link unavailable).nil?
+        next if target.nil? || target.id.nil?
 
         @logger.log("Attacking target ID: #{k}")
         @logger.log("Attack #{target.id} / #{target.name}")
