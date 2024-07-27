@@ -183,6 +183,7 @@ class Autohack < Sandbox::Script
       begin
         targets.new
       rescue Hackers::RequestError => e
-end
-end
+      # Implementación para manejar el error
+    end
+  end
 end
