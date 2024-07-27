@@ -36,21 +36,11 @@ module Hackers
     end
 
     def config
-      # Implementación para obtener la configuración
       { 'version' => '1.0' }
     end
 
     def app_settings
-      # Implementación para obtener la configuración de la aplicación
       { 'node types' => ['type1', 'type2'], 'program types' => ['type1', 'type2'] }
-    end
-  end
-
-  class RequestError < StandardError
-    attr_accessor :type
-
-    def initialize(type)
-      @type = type
     end
   end
 end
@@ -183,3 +173,16 @@ class Autohack < Sandbox::Script
 
         n += 1
         @logger.log("Attack count: #{n}")
+
+        return if n == @args[0].to_i
+        return if Time.now - @start_time > TIMEOUT
+
+        sleep(rand(15..25))
+      end
+
+      begin
+        targets.new
+      rescue Hackers::RequestError => e
+end
+end
+end
