@@ -144,29 +144,39 @@ end
 
 # collect
 CONTEXT_WORLD_COLLECT = CONTEXT_WORLD.add_command(:collect, description: 'Collect bonus', params: ['<id>']) do |tokens, shell|
+ 
   unless GAME.connected?
     shell.puts(NOT_CONNECTED)
     next
   end
 
+  
   id = tokens[1].to_i
+  LOGGER.log("ID de bono: #{id}") 
+  
   unless GAME.world.loaded?
     msg = 'World'
     GAME.world.load
     LOGGER.log(msg)
   end
 
+
   world = GAME.world
   bonuses = world.bonuses
+  LOGGER.log("Bonos cargados: #{bonuses.size}")
 
   unless bonuses.exist?(id)
     shell.puts('No such bonus')
+    LOGGER.log("Bono no encontrado: #{id}") 
     next
   end
 
-  msg = 'Bonus collect'
+  
+ msg = 'Bonus collect'
   bonus = bonuses.get(id)
-  bonus.amount = 15_000
+  LOGGER.log("Bono encontrado: #{bonus.id} - #{bonus.amount}")
+  bonus.amount = 15_000 recolectados en 15,000
+  LOGGER.log("Créditos recolectados: #{bonus.amount}") 
   bonus.collect
   LOGGER.log(msg)
 
