@@ -156,45 +156,45 @@ rescue Hackers::RequestError => e
 end
 
 # collect
-CONTEXT_WORLD_COLLECT = CONTEXT_WORLD.add_command(:collect, description: 'Collect bonus', params: ['<id>']) do |tokens, shell|
- 
+CONTEXT_WORLD_COLLECT = CONTEXT_WORLD.add_command(
+  :collect,
+  description: 'Collect bonus',
+  params: ['<id>']
+) do |tokens, shell|
   unless GAME.connected?
     shell.puts(NOT_CONNECTED)
     next
   end
 
-  
   id = tokens[1].to_i
-  LOGGER.log("ID de bono: #{id}") 
-  
+
   unless GAME.world.loaded?
     msg = 'World'
     GAME.world.load
     LOGGER.log(msg)
   end
 
-
   world = GAME.world
   bonuses = world.bonuses
-  LOGGER.log("Bonos cargados: #{bonuses.size}")
 
   unless bonuses.exist?(id)
     shell.puts('No such bonus')
-    LOGGER.log("Bono no encontrado: #{id}") 
     next
   end
 
-  
- msg = 'Bonus collect'
-  bonus = bonuses.get(id)
-  LOGGER.log("Bono encontrado: #{bonus.id} - #{bonus.amount}")
-  bonus.amount = 15_000
-  LOGGER.log("Créditos recolectados: #{bonus.amount}") 
-  bonus.collect
+  msg = 'Bonus collect'
+  bonuses.get(id).collect
   LOGGER.log(msg)
-
 rescue Hackers::RequestError => e
   LOGGER.error("#{msg} (#{e})")
+end
+
+CONTEXT_WORLD_COLLECT.completion do |line|
+  next unless GAME.world.loaded?
+
+  bonuses = GAME.world.bonuses
+  list = bonuses.select { |b| b.id.to_s =~ /^#{Regexp.escape(line)}/  }
+  list.map { |b| b.id.to_s }
 end
 
 # goals
