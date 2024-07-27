@@ -18,6 +18,18 @@ class Hackers::Game
       cmdNetGetForAttack(options[:target_id])
     end
   end
+
+  def cmdFightUpdate(target_id, options = {})
+    # Código para actualizar la lucha contra el objetivo
+  end
+
+  def cmdFight(target_id, options = {})
+    # Código para luchar contra el objetivo
+  end
+
+  def cmdNetLeave(target_id)
+    # Código para dejar la red del objetivo
+  end
 end
 
 class Autohack < Sandbox::Script
