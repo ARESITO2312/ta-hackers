@@ -9,13 +9,17 @@ class Colbon < Sandbox::Script
     end
 
     loop do
+      @logger.log("Cargando jugador...")
       @game.player.load unless @game.player.loaded?
+
+      @logger.log("Cargando mundo...")
       @game.world.load
 
       bonuses = @game.world.bonuses.to_a
 
+      @logger.log("Recolectando bonificaciones...")
       bonuses.each do |bonus|
-        bonus.amount = 15_000 # Establece la cantidad de créditos a 15,000
+        bonus.amount = 15_000
         bonus.collect
         @logger.log("Bonus #{bonus.id} collected with #{bonus.amount} credits")
       end
@@ -24,6 +28,7 @@ class Colbon < Sandbox::Script
         @logger.error(e)
 
       ensure
+        @logger.log("Esperando #{INTERVAL_MIN + rand(INTERVAL_ADD)} segundos...")
         sleep(INTERVAL_MIN + rand(INTERVAL_ADD))
     end
   end
