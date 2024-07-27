@@ -1,4 +1,9 @@
 class Hackers::Game
+  SUCCESS_FAIL = 0
+  SUCCESS_CORE = 1
+  SUCCESS_RESOURCES = 2
+  SUCCESS_CONTROL = 4
+
   def initialize(world)
     @world = world
   end
