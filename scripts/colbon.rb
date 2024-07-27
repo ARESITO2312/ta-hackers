@@ -28,8 +28,12 @@ class Colbon < Sandbox::Script
         @logger.error(e)
 
       ensure
-        @logger.log("Esperando #{INTERVAL_MIN + rand(INTERVAL_ADD)} segundos...")
-        sleep(INTERVAL_MIN + rand(INTERVAL_ADD))
+        time_left = INTERVAL_MIN + rand(INTERVAL_ADD)
+        @logger.log("Esperando #{time_left} segundos...")
+        time_left.times do |i|
+          @logger.log("Tiempo restante: #{time_left - i} segundos")
+          sleep(1)
+        end
     end
   end
 end
