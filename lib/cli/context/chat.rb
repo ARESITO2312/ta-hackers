@@ -127,6 +127,12 @@ CONTEXT_CHAT_SAY.completion do |line|
 end
 
 # talk
+class Sandbox::Logger
+  def debug(message)
+    puts "DEBUG: #{message}"
+  end
+end
+
 CONTEXT_CHAT_TALK = CONTEXT_CHAT.add_command(:talk, description: 'Talk in the room', params: ['<room>']) do |tokens, shell|
   LOGGER.info("Iniciando comando de chat en habitación #{tokens[1]}")
   room = tokens[1].to_i
