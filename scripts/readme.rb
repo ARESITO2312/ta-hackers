@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 class Readme < Sandbox::Script
   def main
     if @args[0].nil?
@@ -12,19 +10,26 @@ class Readme < Sandbox::Script
     begin
       friend = @game.friend(id)
       friend.load_readme
+
+      if @args[1].nil?
+        # Modo lectura
+        readme = friend.readme
+        if readme.empty?
+          @logger.log('Readme is empty')
+          return
+        end
+        readme.each do |message|
+          @logger.log(message)
+        end
+      else
+        # Modo escritura
+        message = @args[1]
+        friend.write_readme(message)
+        @logger.log("Mensaje escrito en el readme del jugador #{id}: #{message}")
+      end
+
     rescue Hackers::RequestError => e
       @logger.error(e)
-    end
-
-    readme = friend.readme
-
-    if readme.empty?
-      @logger.log('Readme is empty')
-      return
-    end
-
-    readme.each do |message|
-      @logger.log(message)
     end
   end
 end
