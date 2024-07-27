@@ -1,170 +1,116 @@
-module Hackers
-  class Game
-    SUCCESS_FAIL = 0
-    SUCCESS_CORE = 1
-    SUCCESS_RESOURCES = 2
-    SUCCESS_CONTROL = 4
-
-    attr_accessor :world
-
-    def initialize
-      @world = Hackers::World.new
-    end
-
-    def cmdNetGetForAttack(target_id)
-      net = @world.get_net(target_id)
-      return net
-    end
-
-    def cmdNetLeave(target_id)
-      @world.leave_net(target_id)
-    end
-
-    def cmd(command, options = {})
-      case command
-      when 'NetGetForAttack'
-        cmdNetGetForAttack(options[:target_id])
-      end
-    end
-
-    def cmdFightUpdate(target_id, options)
-      puts "Updating fight for target #{target_id}"
-    end
-
-    def cmdFight(target_id, options)
-      puts "Fighting target #{target_id}"
-    end
-
-    def config
-      { 'version' => '1.0' }
-    end
-
-    def app_settings
-      { 'node types' => ['type1', 'type2'], 'program types' => ['type1', 'type2'] }
-    end
+class Hackers::Game
+  def cmdNetGetForAttack(target_id)
+     cmdNetGetForAttack
   end
 
-  class World
-    def get_net(target_id)
-      { profile: { money: 100, bitcoins: 10 } }
-    end
-
-    def leave_net(target_id)
-      true
-    end
-
-    def load
-      true
-    end
-
-    def targets
-      [Target.new(1, 'Target 1'), Target.new(2, 'Target 2')]
-    end
-
-    def new
-      targets
+  def cmd(command, options = {})
+    case command
+    when 'NetGetForAttack'
+      cmdNetGetForAttack(options[:target_id])
     end
   end
+end
 
-  class Target
-    attr_accessor :id, :name
+class Autohack < Sandbox::Script
+  BLACKLIST = [127]
+  TIMEOUT = 300
 
-    def initialize(id, name)
-      @id = id
-      @name = name
-    end
-  end
-
-  class Logger
-    def log(message)
-      puts message
+  def main
+    if @args[0].nil?
+      @logger.log('Specify the number of hosts')
+      return
     end
 
-    def error(message)
-      puts "Error: #{message}"
-    end
-  end
-
-  class Autohack < Sandbox::Script
-    BLACKLIST = [127]
-    TIMEOUT = 300
-
-    def initialize
-      @logger = Logger.new
-      @start_time = Time.now
-      @game = Hackers::Game.new
+    unless @game.connected?
+      @logger.log(NOT_CONNECTED)
+      return
     end
 
-    def main
-      if @args[0].nil?
-        @logger.log('Specify the number of hosts')
-        return
-      end
+    n = 0
+    @game.world.load
+    targets = @game.world.targets
+    @logger.log("Loaded #{targets.count} targets")
 
-      unless @game.connected?
-        @logger.log('Not connected')
-        return
-      end
+    @game = Hackers::Game.new
 
-      n = 0
-      @game.world.load
-      targets = @game.world.targets
-      @logger.log("Loaded #{targets.count} targets")
+    loop do
+      targets.each do |target|
+        k = target.id
+        @logger.log("Target ID: #{k}")
 
-      loop do
-        targets.each do |target|
-          k = (link unavailable)
-          @logger.log("Target ID: #{k}")
+        next if BLACKLIST.include?(k)
+        next if target.nil? || (link unavailable).nil?
 
-          next if BLACKLIST.include?(k)
-          next if target.nil?
+        @logger.log("Attacking target ID: #{k}")
+        @logger.log("Attack #{k} / #{target.name}")
 
-          @logger.log("Attacking target ID: #{k}")
-          @logger.log("Attack #{k} / #{target.name}")
+        begin
+          net = @game.cmd('NetGetForAttack', target_id: k)
+          @logger.log("Got net for attack")
+          sleep(rand(4..9))
 
-          begin
-            net = @game.cmd('NetGetForAttack', target_id: k)
-            @logger.log("Got net for attack")
-            sleep(rand(4..9))
+          update = @game.cmdFightUpdate(k, {
+            money: 0,
+            bitcoin: 0,
+            nodes: '',
+            loots: '',
+            success: Hackers::Game::SUCCESS_FAIL,
+            programs: ''
+          })
+          @logger.log("Updated fight")
+          sleep(rand(35..95))
 
-            update = @game.cmdFightUpdate(k, { money: 0, bitcoin: 0, nodes: '', loots: '', success: Hackers::Game::SUCCESS_FAIL, programs: '' })
-            @logger.log("Updated fight")
-            sleep(rand(35..95))
+          version = [
+            @game.config['version'],
+            @game.app_settings.get('node types'),
+            @game.app_settings.get('program types'),
+          ].join(',')
+          @logger.log("Version: #{version}")
 
-            version = [
-              @game.config['version'],
-              @game.app_settings['node types'].join(','),
-              @game.app_settings['program types'].join(','),
-            ].join(',')
+          success = Hackers::Game::SUCCESS_CORE | Hackers::Game::SUCCESS_RESOURCES | Hackers::Game::SUCCESS_CONTROL
+          fight = @game.cmdFight(k, {
+            money: net['profile'].money,
+            bitcoin: net['profile'].bitcoins,
+            nodes: '',
+            loots: '',
+            success: success,
+            programs: '',
+            summary: '',
+            version: version,
+            replay: ''
+          })
+          @logger.log("Fought")
+          sleep(rand(5..12))
 
-            @logger.log("Version: #{version}")
-
-            success = Hackers::Game::SUCCESS_CORE | Hackers::Game::SUCCESS_RESOURCES | Hackers::Game::SUCCESS_CONTROL
-
-            fight = @game.cmdFight(k, { money: net['profile'].money, bitcoin: net['profile'].bitcoins, nodes: '', loots: '', success: success, programs: '', summary: '', version: version, replay: '' })
-            @logger.log("Fought")
-            sleep(rand(5..12))
-
-            leave = @game.cmdNetLeave(k)
-            @logger.log("Left network")
-
-            @game.player.load
-          rescue => e
-            @logger.error(e)
-            @logger.log("Error attacking target ID: #{k}")
-            sleep(rand(165..295))
-            next
-          end
-
-          n += 1
-          @logger.log("Attack count: #{n}")
-
-          return if n == @args[0].to_i
-          return if Time.now - @start_time > TIMEOUT
-
-          sleep(rand(15..25))
+          leave = @game.cmdNetLeave(k)
+          @logger.log("Left network")
+          @game.player.load
+        rescue => e
+          @logger.error(e)
+          @logger.log("Error attacking target ID: #{k}")
+          sleep(rand(165..295))
+          next
         end
+
+        n += 1
+        @logger.log("Attack count: #{n}")
+
+        return if n == @args[0].to_i
+        return if Time.now - @start_time > TIMEOUT
+
+        sleep(rand(15..25))
+      end
+
+      begin
+        targets.new
+      rescue Hackers::RequestError => e
+        if e.type == 'Net::ReadTimeout'
+          @logger.error('Get new targets timeout')
+          retry
+        end
+        @logger.error("Get new targets (#{e})")
+        return
       end
     end
   end
-end 
+end
