@@ -106,55 +106,53 @@ rescue Hackers::RequestError => e
 end
 
 # bonuses
-CONTEXT_WORLD.add_command(:bonuses, description: 'Show bonuses') do |tokens, shell|
-  
+CONTEXT_WORLD.add_command(
+  :bonuses,
+  description: 'Show bonuses'
+) do |tokens, shell|
   unless GAME.connected?
     shell.puts(NOT_CONNECTED)
-    LOGGER.log("No hay conexión con el servidor")
     next
   end
 
-  
   unless GAME.player.profile.id
     msg = 'Network maintenance'
     GAME.player.load
-    LOGGER.log("Cargando perfil de jugador...")
+    LOGGER.log(msg)
   end
 
-  
   msg = 'World'
   GAME.world.load
-  LOGGER.log("Cargando mundo...")
+  LOGGER.log(msg)
 
-  
   world = GAME.world
   bonuses = world.bonuses
-  LOGGER.log("Obteniendo bonos...")
 
-  
   shell.puts("\e[1;35m\u2022 Bonuses\e[0m")
-
-  
   if bonuses.empty?
-    shell.puts(' Empty')
-    LOGGER.log("No hay bonos disponibles")
+    shell.puts('  Empty')
     next
   end
 
- 
-  shell.puts(format(" \e[35m%-12s %-2s\e[0m", 'ID', 'Amount'))
-  LOGGER.log("Mostrando bonos...")
+  shell.puts(
+    format(
+      "  \e[35m%-12s %-2s\e[0m",
+      'ID',
+      'Amount'
+    )
+  )
 
   bonuses.each do |bonus|
-    LOGGER.log("Bono encontrado: #{bonus.id} - #{bonus.amount}")
-    bonus.amount = 15_000
-    shell.puts(format(' %-12d %-2d', bonus.id, bonus.amount))
+    shell.puts(
+      format(
+        '  %-12d %-2d',
+        bonus.id,
+        bonus.amount
+      )
+    )
   end
-
 rescue Hackers::RequestError => e
-  LOGGER.error("Error al obtener bonos: #{e}")
-rescue StandardError => e
-  LOGGER.error("Error inesperado: #{e}")
+  LOGGER.error("#{msg} (#{e})")
 end
 
 # collect
