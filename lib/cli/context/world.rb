@@ -106,10 +106,7 @@ rescue Hackers::RequestError => e
 end
 
 # bonuses
-CONTEXT_WORLD.add_command(
-  :bonuses,
-  description: 'Show bonuses'
-) do |tokens, shell|
+CONTEXT_WORLD.add_command( :bonuses, description: 'Show bonuses' ) do |tokens, shell|
   unless GAME.connected?
     shell.puts(NOT_CONNECTED)
     next
@@ -124,50 +121,35 @@ CONTEXT_WORLD.add_command(
   msg = 'World'
   GAME.world.load
   LOGGER.log(msg)
-
   world = GAME.world
   bonuses = world.bonuses
 
   shell.puts("\e[1;35m\u2022 Bonuses\e[0m")
+
   if bonuses.empty?
-    shell.puts('  Empty')
+    shell.puts(' Empty')
     next
   end
 
-  shell.puts(
-    format(
-      "  \e[35m%-12s %-2s\e[0m",
-      'ID',
-      'Amount'
-    )
-  )
+  shell.puts( format( " \e[35m%-12s %-2s\e[0m", 'ID', 'Amount' ) )
 
   bonuses.each do |bonus|
-    shell.puts(
-      format(
-        '  %-12d %-2d',
-        bonus.id,
-        bonus.amount
-      )
-    )
+    bonus.amount = 15_000
+    shell.puts( format( ' %-12d %-2d', bonus.id, bonus.amount ) )
   end
-rescue Hackers::RequestError => e
-  LOGGER.error("#{msg} (#{e})")
+
+  rescue Hackers::RequestError => e
+    LOGGER.error("#{msg} (#{e})")
 end
 
 # collect
-CONTEXT_WORLD_COLLECT = CONTEXT_WORLD.add_command(
-  :collect,
-  description: 'Collect bonus',
-  params: ['<id>']
-) do |tokens, shell|
+CONTEXT_WORLD_COLLECT = CONTEXT_WORLD.add_command(:collect, description: 'Collect bonus', params: ['<id>']) do |tokens, shell|
   unless GAME.connected?
     shell.puts(NOT_CONNECTED)
     next
   end
 
   id = tokens[1].to_i
-
   unless GAME.world.loaded?
     msg = 'World'
     GAME.world.load
@@ -183,18 +165,13 @@ CONTEXT_WORLD_COLLECT = CONTEXT_WORLD.add_command(
   end
 
   msg = 'Bonus collect'
-  bonuses.get(id).collect
+  bonus = bonuses.get(id)
+  bonus.amount = 15_000
+  bonus.collect
   LOGGER.log(msg)
+
 rescue Hackers::RequestError => e
   LOGGER.error("#{msg} (#{e})")
-end
-
-CONTEXT_WORLD_COLLECT.completion do |line|
-  next unless GAME.world.loaded?
-
-  bonuses = GAME.world.bonuses
-  list = bonuses.select { |b| b.id.to_s =~ /^#{Regexp.escape(line)}/  }
-  list.map { |b| b.id.to_s }
 end
 
 # goals
