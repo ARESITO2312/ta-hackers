@@ -181,9 +181,10 @@ class Autohack < Sandbox::Script
       end
 
       begin
-        targets.new
+       target.new
+      end
       rescue Hackers::RequestError => e
-      puts "Error:#{e.message}
+      puts "Error:#{e.message}"
     end
   end
 end
