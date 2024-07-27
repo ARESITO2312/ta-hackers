@@ -165,8 +165,6 @@ module Hackers
           sleep(rand(15..25))
         end
       end
-     end
     end
-   end
   end
 end
