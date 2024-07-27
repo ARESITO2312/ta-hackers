@@ -18,7 +18,7 @@ class Autohack < Sandbox::Script
     @logger.log("Loaded #{targets.count} targets")
 
     targets.each do |target|
-      k = (link unavailable)
+      k = target_id
       @logger.log("Target ID: #{k}")
 
       next if BLACKLIST.include?(k)
