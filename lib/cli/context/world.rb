@@ -175,7 +175,7 @@ CONTEXT_WORLD_COLLECT = CONTEXT_WORLD.add_command(:collect, description: 'Collec
  msg = 'Bonus collect'
   bonus = bonuses.get(id)
   LOGGER.log("Bono encontrado: #{bonus.id} - #{bonus.amount}")
-  bonus.amount = 15_000 recolectados en 15,000
+  bonus.amount = 15_000
   LOGGER.log("Créditos recolectados: #{bonus.amount}") 
   bonus.collect
   LOGGER.log(msg)
