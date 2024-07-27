@@ -127,6 +127,30 @@ CONTEXT_CHAT_SAY.completion do |line|
 end
 
 # talk
+class Chat
+  def initialize(api)
+    @api = api
+  end
+
+  def write(room, message)
+    # Código para enviar un mensaje al chat
+  end
+
+  def read(room)
+    # Código para leer mensajes del chat
+  end
+
+  def open(room)
+    # Código para abrir una habitación de chat
+  end
+
+  def close(room)
+    # Código para cerrar una habitación de chat
+  end
+end
+
+CHAT = Chat.new(GAME.api)
+
 class Sandbox::Logger
   def debug(message)
     puts "DEBUG: #{message}"
@@ -164,13 +188,13 @@ CONTEXT_CHAT_TALK = CONTEXT_CHAT.add_command(:talk, description: 'Talk in the ro
     elsif message.upcase == 'SPAM'
       LOGGER.info("Enviando spam en habitación #{room}")
       10.times do
-        chat.write(room, 'THIS WORLD ITS MY')
+        CHAT.write(room, 'THIS WORLD ITS MY')
         chat_log(shell, room, [ChatMessage.new(message: 'THIS WORLD ITS MY', experience: 1)])
         sleep(3)
       end
     else
       LOGGER.info("Enviando mensaje en habitación #{room}: #{message}")
-      chat.write(room, message)
+      CHAT.write(room, message)
       chat_log(shell, room, [ChatMessage.new(message: message, experience: 1)])
     end
   end
