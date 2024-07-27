@@ -16,6 +16,11 @@ class Autohack < Sandbox::Script
     @game.world.load
     targets = @game.world.targets
 
+targets.each do |target|
+k = (target.id)
+next if BLACKLIST.include?(k)
+# ...
+end
     loop do
       targets.each do |target|
         next if BLACKLIST.include?(k)
