@@ -15,66 +15,79 @@ class Autohack < Sandbox::Script
     n = 0
     @game.world.load
     targets = @game.world.targets
+    @logger.log("Loaded #{targets.size} targets")
 
-targets.each do |target|
-k = (target.id)
-next if BLACKLIST.include?(k)
-# ...
-end
+    targets.each do |target|
+      k = target.id
+      @logger.log("Target ID: #{k}")
+
+      next if BLACKLIST.include?(k)
+      # ...
+    end
+
     loop do
       targets.each do |target|
+        k = target.id
+        @logger.log("Attacking target ID: #{k}")
+
         next if BLACKLIST.include?(k)
 
         @logger.log("Attack #{target.id} / #{target.name}")
-
         begin
           net = @game.cmdNetGetForAttack(target.id)
+          @logger.log("Got net for attack")
+
           sleep(rand(4..9))
 
-          update = @game.cmdFightUpdate(target.id,
-            {
-              money: 0,
-              bitcoin: 0,
-              nodes: '',
-              loots: '',
-              success: Hackers::Game::SUCCESS_FAIL,
-              programs: ''
-            }
-          )
+          update = @game.cmdFightUpdate(target.id, { 
+            money: 0, 
+            bitcoin: 0, 
+            nodes: '', 
+            loots: '', 
+            success: Hackers::Game::SUCCESS_FAIL, 
+            programs: '' 
+          } )
+          @logger.log("Updated fight")
+
           sleep(rand(35..95))
 
-          version = [
-            @game.config['version'],
-            @game.app_settings.get('node types'),
-            @game.app_settings.get('program types'),
+          version = [ 
+            @game.config['version'], 
+            @game.app_settings.get('node types'), 
+            @game.app_settings.get('program types'), 
           ].join(',')
+          @logger.log("Version: #{version}")
 
           success = Hackers::Game::SUCCESS_CORE | Hackers::Game::SUCCESS_RESOURCES | Hackers::Game::SUCCESS_CONTROL
+          fight = @game.cmdFight(target.id, { 
+            money: net['profile'].money, 
+            bitcoin: net['profile'].bitcoins, 
+            nodes: '', 
+            loots: '', 
+            success: success, 
+            programs: '', 
+            summary: '', 
+            version: version, 
+            replay: '' 
+          } )
+          @logger.log("Fought")
 
-          fight = @game.cmdFight(target.id,
-            {
-              money: net['profile'].money,
-              bitcoin: net['profile'].bitcoins,
-              nodes: '',
-              loots: '',
-              success: success,
-              programs: '',
-              summary: '',
-              version: version,
-              replay: ''
-            }
-          )
           sleep(rand(5..12))
 
           leave = @game.cmdNetLeave(target.id)
+          @logger.log("Left network")
+
           @game.player.load
         rescue => e
           @logger.error(e)
+          @logger.log("Error attacking target ID: #{k}")
           sleep(rand(165..295))
           next
         end
 
         n += 1
+        @logger.log("Attack count: #{n}")
+
         return if n == @args[0].to_i
 
         sleep(rand(15..25))
