@@ -9,7 +9,7 @@ class Hackers::Game
   end
 
   def cmdNetGetForAttack(target_id)
-    
+    # Código para obtener la información de la red para atacar el objetivo
   end
 
   def cmd(command, options = {})
@@ -40,7 +40,7 @@ class Autohack < Sandbox::Script
     targets = @game.world.targets
     @logger.log("Loaded #{targets.count} targets")
 
-    Hackers::Game
+    # Pasar el argumento esperado al inicializador de la clase Hackers::Game
     @game = Hackers::Game.new(@game.world)
 
     loop do
