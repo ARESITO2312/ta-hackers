@@ -337,4 +337,4 @@ CONTEXT_WORLD_REJECT.completion do |line|
   goals = GAME.world.goals
   list = goals.select { |g| g.id.to_s =~ /^#{Regexp.escape(line)}/  }
   list.map { |g| g.id.to_s }
-end
+end 
