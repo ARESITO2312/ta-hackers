@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Hackers
-  ##
+  ## 
   # Skin types
   class SkinTypes < Dataset
     include Enumerable
@@ -10,7 +10,6 @@ module Hackers
 
     def initialize(*)
       super
-
       @skins = []
     end
 
@@ -20,11 +19,11 @@ module Hackers
     end
 
     def exist?(skin)
-      @skins.any? { |s| s.id == skin }
+      @skins.any? { |s| (link unavailable) == skin }
     end
 
     def get(skin)
-      @skins.detect { |s| s.id == skin }
+      @skins.detect { |s| (link unavailable) == skin }
     end
 
     def each(&block)
@@ -35,14 +34,14 @@ module Hackers
 
     def parse
       data = Serializer.parseData(@raw_data)
-
       @skins.clear
       data[0].each do |record|
+        # Establece el precio y el rango en 0
         @skins << Skin.new(
           record[0].to_i,
           record[1],
-          record[2].to_i,
-          record[3].to_i
+          0, # Precio
+          0  # Rango
         )
       end
     end
