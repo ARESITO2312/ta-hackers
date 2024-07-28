@@ -9,6 +9,10 @@ class Hackers::World::Bonus
   def collect
     # Código para recolectar la bonificación
   end
+
+  def amount=(value)
+    @amount = value
+  end
 end
 
 class Colbon < Sandbox::Script
