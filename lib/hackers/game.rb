@@ -138,13 +138,15 @@ module Hackers
       )
     end
 
-  # Gets player info
-  def player_info(id)
-    raw_data = @api.player_info(id)
-    serializer_profile = Serializer::Profile.new(raw_data)
-    serializer_profile.parse(0, 0)
-  end
-end
+    ##
+    # Gets player info
+    def player_info(id)
+      raw_data = @api.player_info(id)
+
+      serializer_profile = Serializer::Profile.new(raw_data)
+      serializer_profile.parse(0, 0)
+    end
+
     ##
     # Gets detailed player info
     def player_details(id)
