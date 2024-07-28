@@ -140,13 +140,42 @@ module Hackers
 
     ##
     # Gets player info
-    def player_info(id)
-      raw_data = @api.player_info(id)
+    # frozen_string_literal: true
 
-      serializer_profile = Serializer::Profile.new(raw_data)
-      serializer_profile.parse(0, 0)
+require_relative '../scripts/simlink'
+
+class Simlink < Sandbox::Script
+  def main
+    if @args[0].nil?
+      @logger.log("Specify player ID or URI")
+      return
     end
 
+    if @args[0] =~ /^\d+$/
+      id = @args[0].to_i
+      player_info(id)
+      simlink = Hackers::SimLink.new(id)
+      @logger.log(simlink.generate)
+    else
+      simlink = Hackers::SimLink.new(0)
+      begin
+        data = simlink.parse(@args[0])
+      rescue Hackers::LinkError => e
+        @logger.error(e)
+        return
+      end
+      @logger.log("Timestamp: #{Time.at(data[:timestamp] / 1000)}")
+      @logger.log("Player ID: #{data[:value]}")
+    end
+  end
+
+  # Gets player info
+  def player_info(id)
+    raw_data = @api.player_info(id)
+    serializer_profile = Serializer::Profile.new(raw_data)
+    serializer_profile.parse(0, 0)
+  end
+end
     ##
     # Gets detailed player info
     def player_details(id)
