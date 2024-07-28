@@ -1,3 +1,16 @@
+class Hackers::World::Bonus
+  attr_accessor :id, :amount
+
+  def initialize(id, amount)
+    @id = id
+    @amount = amount
+  end
+
+  def collect
+    # Código para recolectar la bonificación
+  end
+end
+
 class Colbon < Sandbox::Script
   INTERVAL_MIN = 60
   INTERVAL_ADD = 0
@@ -26,7 +39,6 @@ class Colbon < Sandbox::Script
 
     rescue Hackers::RequestError => e
       @logger.error(e)
-
     ensure
       time_left = INTERVAL_MIN + rand(INTERVAL_ADD)
       sleep(time_left)
