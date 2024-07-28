@@ -1,6 +1,6 @@
 class Colbon < Sandbox::Script
-  INTERVAL_MIN = 300
-  INTERVAL_ADD = 120
+  INTERVAL_MIN = 60
+  INTERVAL_ADD = 0
 
   def main
     unless @game.connected?
@@ -16,24 +16,20 @@ class Colbon < Sandbox::Script
       @game.world.load
 
       bonuses = @game.world.bonuses.to_a
-
       @logger.log("Recolectando bonificaciones...")
+
       bonuses.each do |bonus|
         bonus.amount = 15_000
         bonus.collect
         @logger.log("Bonus #{bonus.id} collected with #{bonus.amount} credits")
       end
 
-      rescue Hackers::RequestError => e
-        @logger.error(e)
+    rescue Hackers::RequestError => e
+      @logger.error(e)
 
-      ensure
-        time_left = INTERVAL_MIN + rand(INTERVAL_ADD)
-        @logger.log("Esperando #{time_left} segundos...")
-        time_left.times do |i|
-          @logger.log("Tiempo restante: #{time_left - i} segundos")
-          sleep(1)
-        end
+    ensure
+      time_left = INTERVAL_MIN + rand(INTERVAL_ADD)
+      sleep(time_left)
     end
   end
 end
