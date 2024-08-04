@@ -19,11 +19,11 @@ module Hackers
     end
 
     def exist?(skin)
-      @skins.any? { |s| (link unavailable) == skin }
+      @skins.any? { |s| (skin.id) == skin }
     end
 
     def get(skin)
-      @skins.detect { |s| (link unavailable) == skin }
+      @skins.detect { |s| (skin.id) == skin }
     end
 
     def each(&block)
