@@ -24,11 +24,11 @@ class Autohack < Sandbox::Script
 
     loop do
       targets.each do |target|
-        k = (link unavailable)
+        k = target.id
         @logger.log("Target ID: #{k}")
 
         next if BLACKLIST.include?(k)
-        next if target.nil? || (link unavailable).nil?
+        next if target.nil? || target.id.nil?
 
         @logger.log("Attacking target ID: #{k}")
         @logger.log("Attack #{k} / #{target.name}")
