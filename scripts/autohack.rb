@@ -1,8 +1,5 @@
 # frozen_string_literal: true
 
-Aquí te dejo el código completo con la modificación que te propuse:
-
-```
 class Hackers::Game
   SUCCESS_FAIL = 0
   SUCCESS_CORE = 1
