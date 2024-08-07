@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+Aquí te dejo el código completo con la modificación que te propuse:
+
+```
 class Hackers::Game
   SUCCESS_FAIL = 0
   SUCCESS_CORE = 1
@@ -54,7 +57,6 @@ class Autohack < Sandbox::Script
     targets = @game.world.targets
     @logger.log("Loaded #{targets.count} targets")
 
-    # Pasar el argumento esperado al inicializador de la clase Hackers::Game
     @game = Hackers::Game.new(@game.world)
 
     loop do
@@ -90,9 +92,8 @@ class Autohack < Sandbox::Script
           success = Hackers::Game::SUCCESS_CORE | Hackers::Game::SUCCESS_RESOURCES | Hackers::Game::SUCCESS_CONTROL
 
           fight = @game.cmdFight(k, {
-            money: net['profile'].money,
-            bitcoin: net['profile'].bitcoins,
-            nodes: '',
+            money: net['profile'] ? net['profile'].money : 0,
+            bitcoin: net['profile'] ? net['profile'].bitcoins : 0,
             loots: '',
             success: success,
             programs: '',
@@ -109,11 +110,13 @@ class Autohack < Sandbox::Script
           @logger.log("Left network")
 
           @game.player.load
+
         rescue => e
           @logger.error(e)
           @logger.log("Error attacking target ID: #{k}")
 
           sleep(rand(165..295))
+
           next
         end
 
