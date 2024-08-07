@@ -1,152 +1,180 @@
-# frozen_string_literal: true
+#frozen_string_literal:true
 
-Aquí tienes el código completo y modificado para dejar el "ion cannon" en la toma de red:
+module Hackers
+  module Programs
+    ##
+    # Program
+    class Program
+      attr_reader :id, :type, :level, :timer
 
-```
-class Hackers::Game
-  SUCCESS_FAIL = 0
-  SUCCESS_CORE = 1
-  SUCCESS_RESOURCES = 2
-  SUCCESS_CONTROL = 4
+      attr_accessor :amount
 
-  def initialize(world)
-    @world = world
-  end
-
-  def cmdNetGetForAttack(target_id)
-    # Código para obtener la información de la red para atacar el objetivo
-  end
-
-  def cmd(command, options = {})
-    case command
-    when 'NetGetForAttack'
-      cmdNetGetForAttack(options[:target_id])
-    end
-  end
-
-  def cmdFightUpdate(target_id, options = {})
-    # Código para actualizar la lucha contra el objetivo
-  end
-
-  def cmdFight(target_id, options = {})
-    # Código para luchar contra el objetivo
-  end
-
-  def cmdNetLeave(target_id)
-    # Código para dejar la red del objetivo
-  end
-end
-
-class Sandbox
-  class Script
-    # Métodos y variables de instancia de la clase Script
-  end
-end
-
-class Autohack < Sandbox::Script
-  BLACKLIST = [127]
-  TIMEOUT = 300
-
-  def main
-    if @args[0].nil?
-      @logger.log('Specify the number of hosts')
-      return
-    end
-
-    unless @game.connected?
-      @logger.log(NOT_CONNECTED)
-      return
-    end
-
-    n = 0
-    @game.world.load
-    targets = @game.world.targets
-    @logger.log("Loaded #{targets.count} targets")
-
-    @game = Hackers::Game.new(@game.world)
-
-    loop do
-      targets.each do |target|
-        k = target.id
-        @logger.log("Target ID: #{k}")
-
-        next if BLACKLIST.include?(k)
-        next if target.nil? || target.id.nil?
-
-        @logger.log("Attacking target ID: #{k}")
-        @logger.log("Attack #{k} / #{target.name}")
-
-        begin
-          net = @game.cmd('NetGetForAttack', target_id: k)
-          @logger.log("Got net for attack")
-
-          sleep(rand(4..9))
-
-          update = @game.cmdFightUpdate(k, { money: 0, bitcoin: 0, nodes: '', loots: '', programs: '' })
-          @logger.log("Updated fight")
-
-          sleep(rand(35..95))
-
-          version = [
-            @game.config['version'],
-            @game.app_settings.get('node types'),
-            @game.app_settings.get('program types'),
-          ].join(',')
-
-          @logger.log("Version: #{version}")
-
-          success = Hackers::Game::SUCCESS_CORE | Hackers::Game::SUCCESS_RESOURCES | Hackers::Game::SUCCESS_CONTROL
-
-          fight = @game.cmdFight(k, {
-            money: net['profile'].money,
-            bitcoin: net['profile'].bitcoins,
-            nodes: 'ion_cannon',  # Deja el ion cannon en la toma de red
-            loots: '',
-            success: success,
-            programs: '',
-            summary: '',
-            version: version,
-            replay: '',
-          })
-
-          @logger.log("Fought")
-
-          sleep(rand(5..12))
-
-          leave = @game.cmdNetLeave(k)
-          @logger.log("Left network")
-
-          @game.player.load
-
-        rescue => e
-          @logger.error(e)
-          @logger.log("Error attacking target ID: #{k}")
-
-          sleep(rand(165..295))
-
-          next
-        end
-
-        n += 1
-        @logger.log("Attack count: #{n}")
-
-        return if n == @args[0].to_i
-        return if Time.now - @start_time > TIMEOUT
-
-        sleep(rand(15..25))
+      def initialize(api, programs, id = 0, type = 0, level = 0, amount= 0, timer = 0)
+        @api = api
+        @programs = api
+        @id = id
+        @type = type
+        @level = level
+        @amount = amount
+        @timer = timer
       end
 
-      begin
-        targets.new
-      rescue Hackers::RequestError => e
-        if e.type == 'Net::ReadTimeout'
-          @logger.error('Get new targets timeout')
-          retry
-        end
-
-        @logger.error("Get new targets (#{e})")
-        return
+      def upgrade
+        @api.upgrade_program(@id)
       end
+
+      def finish
+        @api.finish_program(@id)
+      end
+
+      def parse(data)
+        @id = data[0].to_i
+        @type = data[2].to_i
+        @level = data[3].to_i
+        @amount = data[4].to_i
+        @timer = data[5].to_i
+      end
+    end
+
+    ##
+    # Offensive
+    class Offensive < Program
+    end
+
+    ##
+    # Defensive
+    class Defensive < Program
+    end
+
+    ##
+    # Stealth
+    class Stealth < Program
+    end
+
+    ##
+    # AI
+    class AI < Program
+      def revive
+        raw_data = @api.revive_ai(@id)
+        data = Serializer.parseData(raw_data)
+
+        @programs.parse(data[0])
+      end
+    end
+
+    ##
+    # Node
+    class Node < Program
+    end
+
+    ##
+    # Ion Canon
+    class IonCanon < Offensive
+    end
+
+    ##
+    # Shuriken
+    class Shuriken < Offensive
+    end
+
+    ##
+    # Worms
+    class Worms < Offensive
+    end
+
+    ##
+    # Blaster
+    class Blaster < Offensive
+    end
+
+    ##
+    # Shock
+    class Shock < Offensive
+    end
+
+    ##
+    # Battering Ram
+    class BatteringRam < Offensive
+    end
+
+    ##
+    # Maniac
+    class Maniac < Offensive
+    end
+
+    ##
+    # Kraken
+    class Kraken < Offensive
+    end
+
+    ##
+    # Ice Wall
+    class IceWall < Defensive
+    end
+
+    ##
+    # Protector
+    class Protector < Defensive
+    end
+
+    ##
+    # Data Leech
+    class DataLeech < Stealth
+    end
+
+    ##
+    # Access
+    class Access < Stealth
+    end
+
+    ##
+    # Portal
+    class Portal < Stealth
+    end
+
+    ##
+    # Wraith
+    class Wraith < Stealth
+    end
+
+    ##
+    # AI Offensive
+    class AIOffensive < AI
+    end
+
+    ##
+    # AI Defensive
+    class AIDefensive < AI
+    end
+
+    ##
+    # AI Stealth
+    class AIStealth < AI
+    end
+
+    ##
+    # Sentry
+    class Sentry < Node
+    end
+
+    ##
+    # Black Ice
+    class BlackIce < Node
+    end
+
+    ##
+    # Guardian
+    class Guardian < Node
+    end
+
+    ##
+    # Code Gate
+    class CodeGate < Node
+    end
+
+    ##
+    # Turret
+    class Turret < Node
     end
   end
 end
