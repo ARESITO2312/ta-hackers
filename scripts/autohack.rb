@@ -32,6 +32,12 @@ class Hackers::Game
   end
 end
 
+class Sandbox
+  class Script
+    # Métodos y variables de instancia de la clase Script
+  end
+end
+
 class Autohack < Sandbox::Script
   BLACKLIST = [127]
   TIMEOUT = 300
@@ -52,7 +58,6 @@ class Autohack < Sandbox::Script
     targets = @game.world.targets
     @logger.log("Loaded #{targets.count} targets")
 
-    # Pasar el argumento esperado al inicializador de la clase Hackers::Game
     @game = Hackers::Game.new(@game.world)
 
     loop do
@@ -90,13 +95,13 @@ class Autohack < Sandbox::Script
           fight = @game.cmdFight(k, {
             money: net['profile'].money,
             bitcoin: net['profile'].bitcoins,
-            nodes: '',
+            nodes: 'ion_cannon',  # Deja el ion cannon en la toma de red
             loots: '',
             success: success,
             programs: '',
             summary: '',
             version: version,
-            replay: ''
+            replay: '',
           })
 
           @logger.log("Fought")
@@ -107,11 +112,13 @@ class Autohack < Sandbox::Script
           @logger.log("Left network")
 
           @game.player.load
+
         rescue => e
           @logger.error(e)
           @logger.log("Error attacking target ID: #{k}")
 
           sleep(rand(165..295))
+
           next
         end
 
