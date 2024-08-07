@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Hackers::Game
   SUCCESS_FAIL = 0
   SUCCESS_CORE = 1
