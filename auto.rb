@@ -1,12 +1,11 @@
 connect
-sleep 8
 script
-sleep 4
+pause (4)
 run antiafk
-sleep 5
+pause (7)
 ..
 chat
-sleep 5
+pause (5)
 open 106
 ..
-exit
+loop {}
