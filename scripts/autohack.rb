@@ -1,4 +1,4 @@
-# frozen_string_literal: true 
+# frozen_string_literal: true
 
 class Hackers::Game
   SUCCESS_FAIL = 0
@@ -39,13 +39,16 @@ class Autohack < Sandbox::Script
   TIMEOUT = 300
 
   def main
+    @start_time = Time.now
+    @logger = Logger.new(STDOUT)
+
     if @args[0].nil?
       @logger.log('Specify the number of hosts')
       return
     end
 
     unless @game.connected?
-      @logger.log(NOT_CONNECTED)
+      @logger.log('Not connected')
       return
     end
 
@@ -54,7 +57,6 @@ class Autohack < Sandbox::Script
     targets = @game.world.targets
     @logger.log("Loaded #{targets.count} targets")
 
-    # Pasar el argumento esperado al inicializador de la clase Hackers::Game
     @game = Hackers::Game.new(@game.world)
 
     loop do
@@ -98,7 +100,7 @@ class Autohack < Sandbox::Script
             programs: '',
             summary: '',
             version: version,
-            replay: ''
+            replay: '',
           })
 
           @logger.log("Fought")
@@ -109,21 +111,19 @@ class Autohack < Sandbox::Script
           @logger.log("Left network")
 
           @game.player.load
-        rescue => e
+
+          n += 1
+          @logger.log("Attack count: #{n}")
+
+          return if n == @args[0].to_i
+          return if Time.now - @start_time > TIMEOUT
+
+          sleep(rand(15..25))
+        rescue StandardError => e
           @logger.error(e)
           @logger.log("Error attacking target ID: #{k}")
-
           sleep(rand(165..295))
-          next
         end
-
-        n += 1
-        @logger.log("Attack count: #{n}")
-
-        return if n == @args[0].to_i
-        return if Time.now - @start_time > TIMEOUT
-
-        sleep(rand(15..25))
       end
 
       begin
