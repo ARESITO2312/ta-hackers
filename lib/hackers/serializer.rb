@@ -36,7 +36,9 @@ module Hackers
     def self.parseData(data, delim1 = DELIM_SECTION, delim2 = DELIM_RECORD, delim3 = DELIM_FIELD)
       array = []
       begin
-        data.split(delim1).each.with_index do |section, i|
+        # Limpia caracteres inválidos antes de procesar
+        safe_data = data.to_s.dup.force_encoding('UTF-8').scrub
+        safe_data.split(delim1).each.with_index do |section, i|
           array[i] = [] if array[i].nil?
           section.split(delim2).each.with_index do |record, j|
             array[i][j] = [] if array[i][j].nil?
@@ -67,30 +69,26 @@ module Hackers
       attr_reader :fields
 
       def initialize(data = nil)
-        @data = data.to_s
-
+        # Limpia datos al recibirlos
+        @data = data.to_s.dup.force_encoding('UTF-8').scrub
         @fields = []
-
         split
       end
 
       def section(a)
         raise ParserError, "No section #{a}" if a >= @fields.length
-
         @fields[a]
       end
 
       def record(a, b)
         s = section(a)
         raise ParserError, "No record #{a}.#{b}" if b >= s.length
-
         s[b]
       end
 
       def field(a, b, c)
         r = record(a, b)
         raise ParserError, "No field #{a}.#{b}.#{c}" if c >= r.length
-
         r[c]
       end
 
@@ -113,6 +111,7 @@ module Hackers
       private
 
       def split
+        # Ya usamos @data limpio desde initialize
         @data.split(DELIM_SECTION_NORM).each_with_index do |section, i|
           @fields[i] ||= []
           section.split(DELIM_RECORD_NORM).each_with_index do |record, j|
@@ -126,31 +125,15 @@ module Hackers
 
       def normalize(data)
         data.tr(
-          [
-            DELIM_SECTION_SPEC,
-            DELIM_RECORD_SPEC,
-            DELIM_FIELD_SPEC
-          ].join,
-          [
-            DELIM_SECTION_NORM,
-            DELIM_RECORD_NORM,
-            DELIM_FIELD_NORM
-          ].join
+          [DELIM_SECTION_SPEC, DELIM_RECORD_SPEC, DELIM_FIELD_SPEC].join,
+          [DELIM_SECTION_NORM, DELIM_RECORD_NORM, DELIM_FIELD_NORM].join
         )
       end
 
       def denormalize(data)
         data.tr(
-          [
-            DELIM_SECTION_NORM,
-            DELIM_RECORD_NORM,
-            DELIM_FIELD_NORM
-          ].join,
-          [
-            DELIM_SECTION_SPEC,
-            DELIM_RECORD_SPEC,
-            DELIM_FIELD_SPEC
-          ].join,
+          [DELIM_SECTION_NORM, DELIM_RECORD_NORM, DELIM_FIELD_NORM].join,
+          [DELIM_SECTION_SPEC, DELIM_RECORD_SPEC, DELIM_FIELD_SPEC].join
         )
       end
     end
@@ -182,11 +165,9 @@ module Hackers
       def parse(a, b, c)
         messages = []
         return messages unless record?(a, b)
-
         field(a, b, c).split(DELIM).each do |message|
           messages << Data.new(message)
         end
-
         messages
       end
 
@@ -199,18 +180,8 @@ module Hackers
     # Profile
     class Profile < Base
       Data = Struct.new(
-        :id,
-        :name,
-        :money,
-        :bitcoins,
-        :credits,
-        :experience,
-        :rank,
-        :builders,
-        :x,
-        :y,
-        :country,
-        :skin
+        :id, :name, :money, :bitcoins, :credits, :experience,
+        :rank, :builders, :x, :y, :country, :skin
       )
 
       def parse(a, b)
@@ -234,26 +205,14 @@ module Hackers
     ##
     # Chat
     class Chat < Base
-      Data = Struct.new(
-        :datetime,
-        :name,
-        :message,
-        :id,
-        :experience,
-        :rank,
-        :country
-      )
+      Data = Struct.new(:datetime, :name, :message, :id, :experience, :rank, :country)
 
       def parse(a)
         section(a).reverse_each.map do |record|
           Data.new(
-            record[0],
-            record[1],
-            normalize(record[2]),
-            record[3].to_i,
-            record[4].to_i,
-            record[5].to_i,
-            record[6].to_i
+            record[0], record[1], normalize(record[2]),
+            record[3].to_i, record[4].to_i,
+            record[5].to_i, record[6].to_i
           )
         end
       rescue ParserError
@@ -272,22 +231,13 @@ module Hackers
     ##
     # Shield type
     class ShieldType < Base
-      Data = Struct.new(
-        :id,
-        :hours,
-        :price,
-        :title,
-        :description
-      )
+      Data = Struct.new(:id, :hours, :price, :title, :description)
 
       def parse(a)
         section(a).each.map do |record|
           Data.new(
-            record[0].to_i,
-            record[1].to_i,
-            record[3].to_i,
-            record[4],
-            record[5]
+            record[0].to_i, record[1].to_i, record[3].to_i,
+            record[4], record[5]
           )
         end
       end
@@ -300,10 +250,7 @@ module Hackers
 
       def parse(a)
         section(a).map do |record|
-          Data.new(
-            record[0].to_i,
-            record[1].to_i
-          )
+          Data.new(record[0].to_i, record[1].to_i)
         end
       end
     end
@@ -315,11 +262,7 @@ module Hackers
 
       def parse(a)
         section(a).map do |record|
-          Data.new(
-            record[1],
-            record[2],
-            record[3]
-          )
+          Data.new(record[1], record[2], record[3])
         end
       end
     end
