@@ -34,12 +34,11 @@ def chat_log(shell, room, messages)
         ColorTerm.brown(message.message)
       )
     )
-    # ✅ Protección agregada sin romper nada
+    # === ÚNICO CAMBIO: SOLO ESTA PROTECCIÓN, NADA MÁS ===
     begin
       Readline.refresh_line if Readline.respond_to?(:refresh_line)
-    rescue StandardError
-      # Ignora sin detener
-    end
+    rescue StandardError; end
+    # === FIN DEL CAMBIO ===
   end
 end
 
