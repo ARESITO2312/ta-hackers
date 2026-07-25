@@ -8,68 +8,123 @@ module Hackers
       ##
       # Script execution context
       class Script < Base
-        def initialize(parent, script_id = nil)
+        def initialize(parent)
           super(parent)
-          @script_id = script_id
+          @script = nil
           @reading = false
         end
 
         def run
-          return unless @script_id
+          return unless @script
 
-          thread_log = Thread.new { script_log }
-          thread_read = Thread.new { script_read }
+          thr_log = Thread.new { script_log }
+          thr_in  = Thread.new { script_input }
 
-          thread_log.join
-          thread_read.join
+          thr_log.join
+          thr_in.join
+        end
+
+        def commands
+          {
+            'run'   => 'Run script by ID or name',
+            'list'  => 'List available scripts',
+            'stop'  => 'Stop running script',
+            'info'  => 'Show script details',
+            'quit'  => 'Exit script context'
+          }
+        end
+
+        def exec(cmd, args)
+          case cmd.downcase
+          when 'run'
+            script_run(args.join(' '))
+          when 'list'
+            script_list
+          when 'stop'
+            script_stop
+          when 'info'
+            script_info(args.join(' '))
+          when 'quit', 'exit'
+            terminate
+          else
+            parent.exec(cmd, args)
+          end
+        end
+
+        private
+
+        def script_list
+          list = @parent.api.scripts_list
+          puts "Available scripts:"
+          list.each do |s|
+            puts "  #{s[:id]} - #{s[:name]}"
+          end
+        end
+
+        def script_run(name)
+          @script = @parent.api.script_get(name)
+          unless @script
+            puts "Script not found: #{name}"
+            return
+          end
+          puts "Running script: #{@script.name}"
+          run
+        end
+
+        def script_stop
+          terminate if @script
+          puts "Script stopped"
+        end
+
+        def script_info(name)
+          s = @parent.api.script_get(name)
+          return puts "Script not found" unless s
+          puts "ID: #{s.id}"
+          puts "Name: #{s.name}"
+          puts "Description: #{s.description}"
         end
 
         def script_log
           loop do
-            break if terminated?
+            break if terminated? || !@script
 
             begin
-              # Aquí va la lógica que muestra la salida del script
-              # (mantén el código original de lectura/impresión)
-              # ...
-
-              # ✅ Protección definitiva contra el error de refresh_line
+              line = @script.read_line
+              puts line if line
+              
+              # ✅ Protección definitiva sin perder comandos
               if @reading
                 begin
                   Readline.refresh_line if Readline.respond_to?(:refresh_line)
                 rescue StandardError
-                  # Ignora sin detener la ejecución
+                  # Ignora sin romper
                 end
               end
-            rescue StandardError
+            rescue StandardError => e
+              puts "Error: #{e.message}"
               sleep 1
-              next
             end
-
-            sleep 0.3
+            sleep 0.2
           end
         end
 
-        def script_read
+        def script_input
           loop do
-            break if terminated?
+            break if terminated? || !@script
 
             @reading = true
             input = Readline.readline('/script > ', true)
             @reading = false
 
             break unless input
-
             input.strip!
-            next if input.empty?
 
             if input.downcase == 'exit'
               terminate
               break
             end
 
-            # Aquí va la lógica de enviar comandos al script
-            # ...
+            @script.send_input(input)
           end
         end
       end
