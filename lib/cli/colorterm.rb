@@ -3,29 +3,45 @@
 module ColorTerm
   RESET = "\e[0m"
 
-  def self.black;   "\e[30m"; end
-  def self.red;     "\e[31m"; end
-  def self.green;   "\e[32m"; end
-  def self.yellow;  "\e[33m"; end
-  def self.blue;    "\e[34m"; end
-  def self.magenta; "\e[35m"; end
-  def self.cyan;    "\e[36m"; end
-  def self.brown;   "\e[33m"; end
-  def self.white;   "\e[37m"; end
+  # Colores básicos
+  BLACK   = "\e[30m"
+  RED     = "\e[31m"
+  GREEN   = "\e[32m"
+  YELLOW  = "\e[33m"
+  BLUE    = "\e[34m"
+  MAGENTA = "\e[35m"
+  CYAN    = "\e[36m"
+  BROWN   = "\e[33m"
+  WHITE   = "\e[37m"
 
-  def self.reset; RESET; end
+  def self.black;   BLACK;   end
+  def self.red;     RED;     end
+  def self.green;   GREEN;   end
+  def self.yellow;  YELLOW;  end
+  def self.blue;    BLUE;    end
+  def self.magenta; MAGENTA; end
+  def self.cyan;    CYAN;    end
+  def self.brown;   BROWN;   end
+  def self.white;   WHITE;   end
+  def self.reset;   RESET;   end
 
-  class << self
-    %i[black red green yellow blue magenta cyan brown white].each do |c|
-      define_method(c) do
-        ColorString.new(send(c.to_s))
-      end
-    end
-  end
-
+  # Clase para estilos
   class ColorString < String
     def bold;      "\e[1m#{self}"; end
     def underline; "\e[4m#{self}"; end
     def blink;     "\e[5m#{self}"; end
+  end
+
+  # Métodos que devuelven la cadena con estilo
+  class << self
+    def black_bold;   ColorString.new(BLACK).bold;   end
+    def red_bold;     ColorString.new(RED).bold;     end
+    def green_bold;   ColorString.new(GREEN).bold;   end
+    def yellow_bold;  ColorString.new(YELLOW).bold;  end
+    def blue_bold;    ColorString.new(BLUE).bold;    end
+    def magenta_bold; ColorString.new(MAGENTA).bold; end
+    def cyan_bold;    ColorString.new(CYAN).bold;    end
+    def brown_bold;   ColorString.new(BROWN).bold;   end
+    def white_bold;   ColorString.new(WHITE).bold;   end
   end
 end
