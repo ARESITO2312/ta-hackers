@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require 'json'
-# ✅ Solo cambiamos la ruta de carga
 require_relative 'colorterm'
 
 module Sandbox
@@ -31,7 +30,9 @@ module Sandbox
   class Logger
     attr_accessor :log_cterm, :error_cterm, :info_cterm,
                   :log_prefix_cterm, :error_prefix_cterm, :info_prefix_cterm,
-                  :log_prefix, :error_prefix, :info_prefix
+                  :log_prefix, :error_prefix, :info_prefix,
+                  :logPrefix, :errorPrefix, :infoPrefix,
+                  :logPrefixCterm, :errorPrefixCterm, :infoPrefixCterm
 
     def initialize(shell)
       @shell = shell
@@ -45,11 +46,16 @@ module Sandbox
       @log_prefix = String.new
       @error_prefix = String.new
       @info_prefix = String.new
+      @logPrefix = @log_prefix
+      @errorPrefix = @error_prefix
+      @infoPrefix = @info_prefix
+      @logPrefixCterm = @log_prefix_cterm
+      @errorPrefixCterm = @error_prefix_cterm
+      @infoPrefixCterm = @info_prefix_cterm
     end
 
     def log(message)
       @shell.puts(@log_prefix_cterm.get(@log_prefix) + @log_cterm.get(message.to_s))
-      # ✅ Protección contra el error de refresh_line
       begin
         if defined?(Readline)&.respond_to?(:refresh_line)
           Readline.refresh_line if @reading
@@ -63,7 +69,6 @@ module Sandbox
 
     def error(message)
       @shell.puts(@error_prefix_cterm.get(@error_prefix) + @error_cterm.get(message.to_s))
-      # ✅ Misma protección
       begin
         if defined?(Readline)&.respond_to?(:refresh_line)
           Readline.refresh_line if @reading
@@ -77,7 +82,6 @@ module Sandbox
 
     def info(message)
       @shell.puts(@info_prefix_cterm.get(@info_prefix) + @info_cterm.get(message.to_s))
-      # ✅ Misma protección
       begin
         if defined?(Readline)&.respond_to?(:refresh_line)
           Readline.refresh_line if @reading
