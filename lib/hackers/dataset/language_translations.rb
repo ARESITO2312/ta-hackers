@@ -39,3 +39,4 @@ module Hackers
     puts "⚠️ No se cargaron traducciones, usando valores por defecto"
   end
 end
+end
