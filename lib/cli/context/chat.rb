@@ -14,42 +14,79 @@ module Hackers
         def run
           loop do
             break if terminated?
-
             @reading = true
             input = Readline.readline('/chat > ', true)
             @reading = false
-
             break unless input
             input.strip!
+            cmd = input.downcase
 
-            case input.downcase
-            when /^open\s+(\d+)/
-              room_id = $1
-              @room = @parent.api.chat_join(room_id)
-              puts "✅ Conectado a sala #{room_id}"
-              # Arranca el lector de mensajes en segundo plano
-              Thread.new { chat_listen }
-            when 'list'
-              rooms = @parent.api.chat_rooms
-              puts "Salas disponibles:"
-              rooms.each { |r| puts "  #{r[:id]} - #{r[:name]}" }
-            when 'users'
+            case cmd
+            # === ENTRAR / UNIRSE ===
+            when /^open\s+(\d+)/, /^join\s+(\d+)/
+              id_sala = $1
+              @room = @parent.api.chat_join(id_sala)
+              puts "✅ Unido a sala ##{id_sala}"
+              Thread.new { escuchar_mensajes }
+
+            # === VER SALAS ===
+            when 'list', 'rooms', 'salas'
+              salas = @parent.api.chat_rooms rescue []
+              puts "📋 Salas disponibles:"
+              salas.each { |s| puts "  ##{s[:id]} - #{s[:name]}" }
+
+            # === VER USUARIOS ===
+            when 'users', 'who', 'jugadores'
               if @room
-                users = @room.users
-                puts "Usuarios en sala:"
-                users.each { |u| puts "  #{u[:name]} (ID: #{u[:id]})" }
+                us = @room.users rescue []
+                puts "👥 En esta sala:"
+                us.each { |u| puts "  #{u[:name]} | Nivel #{u[:rank]}" }
+              else
+                puts "❌ Primero entra a una sala con open [ID]"
+              end
+
+            # === ENVIAR MENSAJES ===
+            when /^say\s+(.+)/, /^msg\s+(.+)/, /^decir\s+(.+)/
+              texto = $1
+              if @room && !texto.empty?
+                @room.send(texto)
+                puts "✓ Enviado"
               else
                 puts "❌ No estás en ninguna sala"
               end
-            when 'exit', 'quit'
+
+            # === TU PERFIL ===
+            when 'me', 'whoami', 'yo'
+              yo = @parent.api.profile rescue nil
+              if yo
+                puts "👤 Tu perfil:"
+                puts "   Nombre: #{yo.name}"
+                puts "   ID: #{yo.id}"
+                puts "   Rango: #{yo.rank}"
+              end
+
+            # === UTILIDADES ===
+            when 'clear', 'cls', 'limpiar'
+              system('clear')
+            when 'exit', 'quit', 'salir', 'back', '..'
               terminate
               break
+            when 'help', 'ayuda', 'comandos'
+              puts "💬 COMANDOS DEL CHAT:"
+              puts "  open/join [ID]   → Entrar a sala"
+              puts "  list/rooms       → Ver salas"
+              puts "  users/who        → Ver quién está ahí"
+              puts "  say/msg [texto]  → Enviar mensaje"
+              puts "  me/yo            → Ver tus datos"
+              puts "  clear/cls        → Limpiar pantalla"
+              puts "  exit/..          → Salir del chat"
+              puts "  (solo texto)     → Enviar directamente"
             else
+              # Si no es comando, envía el texto como mensaje
               if @room && !input.empty?
                 @room.send(input)
               else
-                puts "❌ Comando desconocido o no estás en sala"
-                puts "Comandos: open [ID], list, users, exit"
+                puts "❌ Comando desconocido. Escribe help"
               end
             end
           end
@@ -57,18 +94,17 @@ module Hackers
 
         private
 
-        def chat_listen
+        def escuchar_mensajes
           until terminated?
             begin
-              @room.read.each do |msg|
-                puts "[#{msg.datetime}] #{msg.name}: #{msg.message}"
+              mensajes = @room.read rescue []
+              mensajes.each do |m|
+                puts "[#{m.datetime}] #{m.name} (#{m.rank}): #{m.message}"
                 # ✅ Protección definitiva
                 if @reading
                   begin
                     Readline.refresh_line if Readline.respond_to?(:refresh_line)
-                  rescue StandardError
-                    # Sin romper nada
-                  end
+                  rescue StandardError; end
                 end
               end
             rescue StandardError
