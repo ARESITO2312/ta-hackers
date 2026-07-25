@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+# Carga obligatoria de la clase base antes de usarla
+require_relative 'base'
+
 module Hackers
   module CLI
     module Context
@@ -32,13 +35,13 @@ module Hackers
               @room.read.each do |msg|
                 next if msg.message.to_s.strip.empty?
 
-                puts "[#{msg.datetime}] #{msg.name}: #{msg.message}"
+                puts "[#{msg.datetime}] #{msg.name} (#{msg.rank}): #{msg.message}"
                 # Protección segura para la función que falla
                 if @reading
                   begin
                     Readline.refresh_line if Readline.respond_to?(:refresh_line)
                   rescue StandardError
-                    # Ignora sin romper
+                    # Ignora sin detener el programa
                   end
                 end
               end
@@ -64,8 +67,10 @@ module Hackers
             input.strip!
             next if input.empty?
 
-            terminate if input.downcase == 'exit'
-            break if terminated?
+            if input.downcase == 'exit'
+              terminate
+              break
+            end
 
             begin
               @room.send(input)
