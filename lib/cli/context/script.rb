@@ -9,7 +9,14 @@ SCRIPT_VARS = {
 }
 
 SCRIPT_LOG_CHAR = "\u273f"
-SCRIPT_LOGGER = LOGGER
+
+SCRIPT_LOGGER = Sandbox::Logger.new(SHELL)
+SCRIPT_LOGGER.log_prefix = "\u273f "
+SCRIPT_LOGGER.log_prefix_cterm = ColorTerm.blue.bold
+SCRIPT_LOGGER.log_cterm = ColorTerm.blue
+SCRIPT_LOGGER.error_prefix = "\u273f "
+SCRIPT_LOGGER.error_prefix_cterm = ColorTerm.red.bold
+SCRIPT_LOGGER.error_cterm = ColorTerm.red
 
 def script_run(shell, script, args)
   job = SCRIPT_VARS[:job_counter] += 1
@@ -19,7 +26,17 @@ def script_run(shell, script, args)
   }
 
   file = File.join(SCRIPT_DIR, "#{script}#{SCRIPT_EXT}")
+
   logger = Sandbox::Logger.new(shell)
+  logger.log_prefix = "\u276f [#{script}] "
+  logger.log_prefix_cterm = ColorTerm.cyan.bold
+  logger.log_cterm = ColorTerm.cyan
+  logger.error_prefix = "\u276f [#{script}] "
+  logger.error_prefix_cterm = ColorTerm.red.bold
+  logger.error_cterm = ColorTerm.red
+  logger.info_prefix = "\u276f [#{script}] "
+  logger.info_prefix_cterm = ColorTerm.white.bold
+  logger.info_cterm = ColorTerm.white
 
   begin
     name = script.capitalize
@@ -46,6 +63,7 @@ def script_log_backtrace(script, job, e)
   (e.backtrace.length - 1).downto(0) do |i|
     msg += "#{i + 1}. #{e.backtrace[i]}\n"
   end
+
   SCRIPT_LOGGER.error("Error: #{script} [#{job}]\n\n#{msg}\n=> #{e.message}")
 end
 
@@ -58,11 +76,13 @@ CONTEXT_SCRIPT_RUN = CONTEXT_SCRIPT.add_command(
   params: ['<name>']
 ) do |tokens, shell|
   script = tokens[1]
+
   file = File.join(SCRIPT_DIR, "#{script}#{SCRIPT_EXT}")
   unless File.file?(file)
     shell.puts('No such script')
     next
   end
+
   Thread.new { script_run(shell, script, tokens[2..]) }
 end
 
@@ -81,15 +101,20 @@ CONTEXT_SCRIPT.add_command(
   Dir.children(SCRIPT_DIR).sort.each do |child|
     file = File.join(SCRIPT_DIR, child)
     next unless File.file?(file) && child.end_with?(SCRIPT_EXT)
+
     child.delete_suffix!(SCRIPT_EXT)
     scripts << child
   end
+
   if scripts.empty?
     shell.puts('No scripts')
     next
   end
+
   shell.puts('Scripts:')
-  scripts.each { |s| shell.puts(" #{s}") }
+  scripts.each do |script|
+    shell.puts(" #{script}")
+  end
 end
 
 # jobs
@@ -101,8 +126,11 @@ CONTEXT_SCRIPT.add_command(
     shell.puts('No active jobs')
     next
   end
+
   shell.puts('Active jobs:')
-  SCRIPT_JOBS.each { |k,v| shell.puts(format(' [%d] %s', k, v[:script])) }
+  SCRIPT_JOBS.each do |k, v|
+    shell.puts(format(' [%d] %s', k, v[:script]))
+  end
 end
 
 # kill
@@ -112,15 +140,18 @@ CONTEXT_SCRIPT_KILL = CONTEXT_SCRIPT.add_command(
   params: ['<id>']
 ) do |tokens, shell|
   job = tokens[1].to_i
+
   unless SCRIPT_JOBS.key?(job)
     shell.puts('No such job')
     next
   end
+
   begin
     SCRIPT_JOBS[job][:instance].finish
   rescue StandardError => e
-    script_log_backtrace(SCRIPT_JOBS[job][:script], job, e)
+    script_log_backtrace(script, job, e)
   end
+
   SCRIPT_JOBS[job][:thread].kill
   SCRIPT_LOGGER.log("Killed: #{SCRIPT_JOBS[job][:script]} [#{job}]")
   script = SCRIPT_JOBS[job][:script]
@@ -130,7 +161,8 @@ CONTEXT_SCRIPT_KILL = CONTEXT_SCRIPT.add_command(
 end
 
 CONTEXT_SCRIPT_KILL.completion do |line|
-  SCRIPT_JOBS.keys.map(&:to_s).grep(/^#{Regexp.escape(line)}/)
+  jobs = SCRIPT_JOBS.keys.map(&:to_s)
+  jobs.grep(/^#{Regexp.escape(line)}/)
 end
 
 # admin
@@ -140,35 +172,44 @@ CONTEXT_SCRIPT_ADMIN = CONTEXT_SCRIPT.add_command(
   params: ['<id>']
 ) do |tokens, shell|
   job = tokens[1].to_i
+
   unless SCRIPT_JOBS.key?(job)
     shell.puts('No such job')
     next
   end
+
   unless SCRIPT_JOBS[job][:instance].respond_to?(:admin)
     shell.puts('Not implemented')
     next
   end
+
   shell.puts('Enter ! or ^D to quit')
-  prompt = "#{SCRIPT_JOBS[job][:script]}:#{job} #{SCRIPT_LOG_CHAR} "
+  prompt = ColorTerm.blue.bold("#{SCRIPT_JOBS[job][:script]}:#{job} #{SCRIPT_LOG_CHAR} ")
   loop do
     line = shell.readline(prompt, true)
     if line.nil?
       shell.puts
       break
     end
+
     line.strip!
     next if line.empty?
+
     break if line == '!'
+
     unless SCRIPT_JOBS.key?(job)
       SCRIPT_LOGGER.error("Job #{job} was terminated")
       break
     end
+
     msg = SCRIPT_JOBS[job][:instance].admin(line)
     next if msg.nil? || msg.empty?
+
     shell.puts(msg)
   end
 end
 
 CONTEXT_SCRIPT_ADMIN.completion do |line|
-  SCRIPT_JOBS.keys.map(&:to_s).grep(/^#{Regexp.escape(line)}/)
+  jobs = SCRIPT_JOBS.keys.map(&:to_s)
+  jobs.grep(/^#{Regexp.escape(line)}/)
 end
