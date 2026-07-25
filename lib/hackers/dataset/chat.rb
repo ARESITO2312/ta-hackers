@@ -1,88 +1,46 @@
 # frozen_string_literal: true
 
 module Hackers
-  module CLI
-    module Context
-      ##
-      # Chat context
-      class Chat < Base
-        attr_reader :room
+  ##
+  # Chat messages
+  class Chat < Dataset
+    include Enumerable
 
-        def initialize(parent, room = nil)
-          super(parent)
-          @room = room
-          @reading = false
-        end
+    Message = Struct.new(:datetime, :name, :message, :id, :experience, :rank, :country)
 
-        def run
-          return unless @room
+    def initialize(*)
+      super
+      @messages = []
+    end
 
-          thread_log = Thread.new { chat_log }
-          thread_read = Thread.new { chat_read }
+    def load
+      @raw_data = @api.chat
+      parse
+    end
 
-          thread_log.join
-          thread_read.join
-        end
+    def each(&block)
+      @messages.each(&block)
+    end
 
-        def chat_log
-          loop do
-            break if terminated?
+    private
 
-            begin
-              @room.read.each do |msg|
-                next if msg.message.to_s.strip.empty?
+    def parse
+      data = Serializer.parseData(@raw_data)
+      return unless data && data[0]
 
-                puts format_message(msg)
-                # Protege la llamada a refresh_line
-                if @reading
-                  begin
-                    Readline.refresh_line if Readline.respond_to?(:refresh_line)
-                  rescue StandardError
-                    # Ignora si la función no existe o falla
-                  end
-                end
-              end
-            rescue StandardError => e
-              puts "⚠️ Error en el chat: #{e.message}"
-              sleep 1
-            end
-
-            sleep 0.5
-          end
-        end
-
-        def chat_read
-          loop do
-            break if terminated?
-
-            @reading = true
-            input = Readline.readline('/chat > ', true)
-            @reading = false
-
-            break unless input
-
-            input.strip!
-            next if input.empty?
-
-            if input.downcase == 'exit'
-              terminate
-              break
-            end
-
-            begin
-              @room.send(input)
-            rescue StandardError => e
-              puts "❌ No se pudo enviar: #{e.message}"
-            end
-          end
-        end
-
-        private
-
-        def format_message(msg)
-          "[#{msg.datetime}] #{msg.name} (#{msg.rank}): #{msg.message}"
-        end
-      end
+      @messages = data[0].reverse_each.map do |record|
+        Message.new(
+          record[0],
+          record[1],
+          Serializer.normalizeData(record[2] || ''),
+          record[3]&.to_i || 0,
+          record[4]&.to_i || 0,
+          record[5]&.to_i || 0,
+          record[6]&.to_i || 0
+        )
+      rescue StandardError
+        next
+      end.compact
     end
   end
 end
