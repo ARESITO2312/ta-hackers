@@ -121,14 +121,16 @@ module Hackers
       end
 
       def normalize(data)
-        data.tr(
+        return '' if data.nil? || data.to_s.empty?
+        data.to_s.tr(
           [DELIM_SECTION_SPEC, DELIM_RECORD_SPEC, DELIM_FIELD_SPEC].join,
           [DELIM_SECTION_NORM, DELIM_RECORD_NORM, DELIM_FIELD_NORM].join
         )
       end
 
       def denormalize(data)
-        data.tr(
+        return '' if data.nil? || data.to_s.empty?
+        data.to_s.tr(
           [DELIM_SECTION_NORM, DELIM_RECORD_NORM, DELIM_FIELD_NORM].join,
           [DELIM_SECTION_SPEC, DELIM_RECORD_SPEC, DELIM_FIELD_SPEC].join
         )
