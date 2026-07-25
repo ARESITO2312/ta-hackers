@@ -16,7 +16,6 @@ def chat_read(shell, room)
     else
       chat_log(shell, room, messages)
     end
-
     sleep(GAME.app_settings.get('chat_refresh_interval'))
   end
 end
@@ -34,11 +33,16 @@ def chat_log(shell, room, messages)
         ColorTerm.brown(message.message)
       )
     )
-    # === ÚNICO CAMBIO: SOLO ESTA PROTECCIÓN, NADA MÁS ===
+    # ✅ PROTECCIÓN
     begin
-      Readline.refresh_line if Readline.respond_to?(:refresh_line)
-    rescue StandardError; end
-    # === FIN DEL CAMBIO ===
+      if defined?(Readline)&.respond_to?(:refresh_line)
+        Readline.refresh_line
+      elsif defined?(Reline)&.respond_to?(:refresh_line)
+        Reline.refresh_line
+      end
+    rescue StandardError
+      nil
+    end
   end
 end
 
@@ -54,13 +58,11 @@ CONTEXT_CHAT_OPEN = CONTEXT_CHAT.add_command(
     shell.puts(NOT_CONNECTED)
     next
   end
-
   room = tokens[1].to_i
   if CHAT_ROOMS.key?(room)
     shell.puts("Room #{room} already opened")
     next
   end
-
   GAME.chat.open(room)
   CHAT_ROOMS[room] = Thread.new { chat_read(shell, room) }
 end
@@ -81,7 +83,6 @@ CONTEXT_CHAT_CLOSE = CONTEXT_CHAT.add_command(
     shell.puts('No such opened room')
     next
   end
-
   CHAT_ROOMS[room].kill
   CHAT_ROOMS.delete(room)
   GAME.chat.close(room)
@@ -100,7 +101,6 @@ CONTEXT_CHAT.add_command(
     shell.puts('No opened rooms')
     next
   end
-
   shell.puts "Opened rooms:"
   CHAT_ROOMS.each_key do |k|
     shell.puts(
@@ -122,10 +122,9 @@ CONTEXT_CHAT_SAY = CONTEXT_CHAT.add_command(
 ) do |tokens, shell|
   room = tokens[1].to_i
   unless CHAT_ROOMS.key?(room)
-    shell.puts('No such opened room')
+    @shell.puts('No such opened room')
     next
   end
-
   messages = GAME.chat.write(room, tokens[2..].join(' '))
   chat_log(shell, room, messages)
 rescue Hackers::RequestError => e
@@ -147,7 +146,6 @@ CONTEXT_CHAT_TALK = CONTEXT_CHAT.add_command(
     shell.puts('No such opened room')
     next
   end
-
   shell.puts('Enter ! or press ^D to quit')
   loop do
     prompt = "#{GAME.countries_list.name(room)}:#{room} #{ColorTerm.brown.bold(CHAT_TALK_CHAR)} "
@@ -156,12 +154,9 @@ CONTEXT_CHAT_TALK = CONTEXT_CHAT.add_command(
       shell.puts
       break
     end
-
     message.strip!
     next if message.empty?
-
     break if message == '!'
-
     messages = GAME.chat.write(room, message)
     chat_log(shell, room, messages)
   rescue Hackers::RequestError => e
@@ -183,9 +178,7 @@ CONTEXT_CHAT_USERS = CONTEXT_CHAT.add_command(
     shell.puts(NOT_CONNECTED)
     next
   end
-
   room = tokens[1].to_i
-
   chat = Hackers::Chat.new(GAME.api)
   chat.open(room)
   messages = chat.read(room)
@@ -194,7 +187,6 @@ CONTEXT_CHAT_USERS = CONTEXT_CHAT.add_command(
     shell.puts("No users in room #{room}")
     next
   end
-
   messages.uniq! { |m| m.id }
   shell.puts(
     format(
@@ -203,7 +195,6 @@ CONTEXT_CHAT_USERS = CONTEXT_CHAT.add_command(
       GAME.countries_list.name(room)
     )
   )
-
   messages.each do |message|
     shell.puts(
       format(
