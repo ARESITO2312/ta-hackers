@@ -1,73 +1,88 @@
 # frozen_string_literal: true
 
 module Hackers
-  ##
-  # Chat
-  class Chat < Dataset
-    include Enumerable
+  module CLI
+    module Context
+      ##
+      # Chat context
+      class Chat < Base
+        attr_reader :room
 
-    Room = Struct.new(:id, :last_message)
+        def initialize(parent, room = nil)
+          super(parent)
+          @room = room
+          @reading = false
+        end
 
-    def initialize(api)
-      @api = api
+        def run
+          return unless @room
 
-      @rooms = []
-    end
+          thread_log = Thread.new { chat_log }
+          thread_read = Thread.new { chat_read }
 
-    def each(&block)
-      @rooms.each(&block)
-    end
+          thread_log.join
+          thread_read.join
+        end
 
-    def opened?(room)
-      @rooms.any? { |r| r.id == room }
-    end
+        def chat_log
+          loop do
+            break if terminated?
 
-    def open(room)
-      return if opened?(room)
+            begin
+              @room.read.each do |msg|
+                next if msg.message.to_s.strip.empty?
 
-      @rooms << Room.new(room, String.new)
-    end
+                puts format_message(msg)
+                # Protege la llamada a refresh_line
+                if @reading
+                  begin
+                    Readline.refresh_line if Readline.respond_to?(:refresh_line)
+                  rescue StandardError
+                    # Ignora si la función no existe o falla
+                  end
+                end
+              end
+            rescue StandardError => e
+              puts "⚠️ Error en el chat: #{e.message}"
+              sleep 1
+            end
 
-    def close(room)
-      @rooms.delete_if { |r| r.id == room }
-    end
+            sleep 0.5
+          end
+        end
 
-    def read(room)
-      return unless opened?(room)
+        def chat_read
+          loop do
+            break if terminated?
 
-      room = @rooms.detect { |r| r.id == room }
-      raw_data = @api.read_chat(room.id, room.last_message)
-      serializer = Serializer::Chat.new(raw_data)
-      data = serializer.parse(0)
-      parse(data, room)
-    end
+            @reading = true
+            input = Readline.readline('/chat > ', true)
+            @reading = false
 
-    def write(room, message)
-      return unless opened?(room)
+            break unless input
 
-      serializer_message = Serializer::ChatMessage.new
-      room = @rooms.detect { |r| r.id == room }
-      raw_data = @api.write_chat(
-        room.id,
-        serializer_message.generate(message),
-        room.last_message
-      )
+            input.strip!
+            next if input.empty?
 
-      serializer_chat = Serializer::Chat.new(raw_data)
-      data = serializer_chat.parse(0)
-      parse(data, room)
-    end
+            if input.downcase == 'exit'
+              terminate
+              break
+            end
 
-    private
+            begin
+              @room.send(input)
+            rescue StandardError => e
+              puts "❌ No se pudo enviar: #{e.message}"
+            end
+          end
+        end
 
-    def parse(data, room)
-      messages = []
-      data.each do |message|
-        room.last_message = message.datetime
-        messages << message
+        private
+
+        def format_message(msg)
+          "[#{msg.datetime}] #{msg.name} (#{msg.rank}): #{msg.message}"
+        end
       end
-
-      messages
     end
   end
 end
