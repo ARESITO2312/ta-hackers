@@ -31,12 +31,14 @@ module Sandbox
     attr_accessor :log_cterm, :error_cterm, :info_cterm,
                   :log_prefix_cterm, :error_prefix_cterm, :info_prefix_cterm,
                   :log_prefix, :error_prefix, :info_prefix,
+                  :logSuffix, :errorSuffix, :infoSuffix,
                   :logPrefix, :errorPrefix, :infoPrefix,
                   :logPrefixCterm, :errorPrefixCterm, :infoPrefixCterm
 
     def initialize(shell)
       @shell = shell
       @reading = false
+      # Valores originales
       @log_cterm = ColorTerm.white
       @error_cterm = ColorTerm.white
       @info_cterm = ColorTerm.white
@@ -46,12 +48,16 @@ module Sandbox
       @log_prefix = String.new
       @error_prefix = String.new
       @info_prefix = String.new
+      # Sincronizamos todos los nombres que usa el programa
       @logPrefix = @log_prefix
       @errorPrefix = @error_prefix
       @infoPrefix = @info_prefix
       @logPrefixCterm = @log_prefix_cterm
       @errorPrefixCterm = @error_prefix_cterm
       @infoPrefixCterm = @info_prefix_cterm
+      @logSuffix = String.new
+      @errorSuffix = String.new
+      @infoSuffix = String.new
     end
 
     def log(message)
