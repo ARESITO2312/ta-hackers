@@ -1,122 +1,86 @@
 # frozen_string_literal: true
 
-require 'io/console'
-require 'rbconfig'
-require_relative 'colorterm'
+require 'json'
+require 'cli/colorterm'
 
 module Sandbox
-  # ✅ DEFINIMOS Config COMPLETA AQUÍ, YA QUE LA LIBRERÍA NO LA TRAE
-  class Config
-    def initialize(file = nil)
+  ##
+  # Config
+  class Config < Hash
+    attr_accessor :file
+
+    def initialize(file)
+      super
       @file = file
-      @data = {}
-      load if @file && File.exist?(@file)
-    end
-
-    def [](key)
-      @data[key.to_s]
-    end
-
-    def []=(key, value)
-      @data[key.to_s] = value
-    end
-
-    def key?(key)
-      @data.key?(key.to_s)
     end
 
     def load
-      return unless @file && File.exist?(@file)
-      File.readlines(@file).each do |line|
-        line.strip!
-        next if line.empty? || line.start_with?('#')
-        k, v = line.split('=', 2)
-        next unless k && v
-        @data[k.strip] = v.strip
-      end
+      data = JSON.parse(File.read(@file))
+      return unless data.instance_of?(Hash)
+
+      merge!(data)
     end
 
     def save
-      return unless @file
-      File.write(@file, @data.map { |k,v| "#{k}=#{v}" }.join("\n"))
+      File.write(@file, JSON.pretty_generate(self))
     end
   end
 
+  ##
+  # Logger
   class Logger
-    attr_accessor :logPrefix, :logPrefixCterm, :logCterm, :logSuffix
-    attr_accessor :errorPrefix, :errorPrefixCterm, :errorCterm, :errorSuffix
-    attr_accessor :infoPrefix, :infoPrefixCterm, :infoCterm, :infoSuffix
+    attr_accessor :log_cterm, :error_cterm, :info_cterm,
+                  :log_prefix_cterm, :error_prefix_cterm, :info_prefix_cterm,
+                  :log_prefix, :error_prefix, :info_prefix
 
     def initialize(shell)
       @shell = shell
+      @log_cterm = ColorTerm.white
+      @error_cterm = ColorTerm.white
+      @info_cterm = ColorTerm.white
+      @log_prefix_cterm = ColorTerm.white
+      @error_prefix_cterm = ColorTerm.white
+      @info_prefix_cterm = ColorTerm.white
+      @log_prefix = String.new
+      @error_prefix = String.new
+      @info_prefix = String.new
     end
 
     def log(message)
-      line = +""
-      line << "#{logPrefixCterm}#{logPrefix}#{ColorTerm.reset}#{logCterm}#{message}#{ColorTerm.reset}#{logSuffix}"
-      @shell.puts(line)
-      begin
-        if defined?(Readline)&.respond_to?(:refresh_line)
-          Readline.refresh_line if @reading
-        elsif defined?(Reline)&.respond_to?(:refresh_line)
-          Reline.refresh_line if @reading
-        end
-      rescue StandardError
-        nil
-      end
+      @shell.puts(@log_prefix_cterm.get(@log_prefix) + @log_cterm.get(message.to_s))
     end
 
     def error(message)
-      line = +""
-      line << "#{errorPrefixCterm}#{errorPrefix}#{ColorTerm.reset}#{errorCterm}#{message}#{ColorTerm.reset}#{errorSuffix}"
-      @shell.puts(line)
-      begin
-        if defined?(Readline)&.respond_to?(:refresh_line)
-          Readline.refresh_line if @reading
-        elsif defined?(Reline)&.respond_to?(:refresh_line)
-          Reline.refresh_line if @reading
-        end
-      rescue StandardError
-        nil
-      end
+      @shell.puts(@error_prefix_cterm.get(@error_prefix) + @error_cterm.get(message.to_s))
     end
 
     def info(message)
-      line = +""
-      line << "#{infoPrefixCterm}#{infoPrefix}#{ColorTerm.reset}#{infoCterm}#{message}#{ColorTerm.reset}#{infoSuffix}"
-      @shell.puts(line)
-      begin
-        if defined?(Readline)&.respond_to?(:refresh_line)
-          Readline.refresh_line if @reading
-        elsif defined?(Reline)&.respond_to?(:refresh_line)
-          Reline.refresh_line if @reading
-        end
-      rescue StandardError
-        nil
-      end
+      @shell.puts(@info_prefix_cterm.get(@info_prefix) + @info_cterm.get(message.to_s))
     end
   end
 
-  class Shell
-    def initialize(input = $stdin, output = $stdout)
-      @input = input
-      @output = output
-      @reading = false
+  ##
+  # Parent class for scripts
+  class Script
+    ##
+    # Creates new script:
+    #   game    = Game
+    #   shell   = Shell
+    #   logger  = Logger
+    #   args    = Arguments
+    def initialize(game, shell, logger, args)
+      @game = game
+      @shell = shell
+      @logger = logger
+      @args = args
     end
 
-    def puts(*args)
-      args.each { |line| @output.puts(line) }
-    end
+    ##
+    # Script entry point
+    def main; end
 
-    def print(*args)
-      @output.print(*args)
-    end
-
-    def readline(prompt = "", add_history = false)
-      @reading = true
-      line = Readline.readline(prompt, add_history)
-      @reading = false
-      line
-    end
+    ##
+    # Executes after the script finished
+    def finish; end
   end
 end
