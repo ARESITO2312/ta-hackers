@@ -10,9 +10,6 @@ SCRIPT_VARS = {
 
 SCRIPT_LOG_CHAR = "\u273f"
 
-# ✅ ELIMINAMOS la configuración global del logger aquí, se hace después o ya existe
-# ✅ Dejamos solo lo que es seguro sin depender de clases que no cargaron
-
 def script_run(shell, script, args)
   job = SCRIPT_VARS[:job_counter] += 1
   SCRIPT_JOBS[job] = {
@@ -22,17 +19,8 @@ def script_run(shell, script, args)
 
   file = File.join(SCRIPT_DIR, "#{script}#{SCRIPT_EXT}")
 
+  # ✅ Usamos el logger que ya viene configurado, sin redefinir colores
   logger = Sandbox::Logger.new(shell)
-  # ✅ Aquí sí ya está cargado ColorTerm, y usamos los nombres CORRECTOS (camelCase)
-  logger.logPrefix = "\u276f [#{script}] "
-  logger.logPrefixCterm = ColorTerm.cyan.bold
-  logger.logCterm = ColorTerm.cyan
-  logger.errorPrefix = "\u276f [#{script}] "
-  logger.errorPrefixCterm = ColorTerm.red.bold
-  logger.errorCterm = ColorTerm.red
-  logger.infoPrefix = "\u276f [#{script}] "
-  logger.infoPrefixCterm = ColorTerm.white.bold
-  logger.infoCterm = ColorTerm.white
 
   begin
     name = script.capitalize
@@ -40,11 +28,10 @@ def script_run(shell, script, args)
     raise "Class #{name} not found" unless Object.const_defined?(name)
 
     SCRIPT_JOBS[job][:instance] = Object.const_get(name).new(GAME, shell, logger, args)
+    SCRIPT_LOGGER.log("Run: #{script} [#{job}]")
     SCRIPT_JOBS[job][:instance].main
     SCRIPT_JOBS[job][:instance].finish
-    # ✅ Usamos el logger global ya existente, no lo definimos aquí
-    LOGGER.log("Run: #{script} [#{job}]")
-    LOGGER.log("Done: #{script} [#{job}]")
+    SCRIPT_LOGGER.log("Done: #{script} [#{job}]")
   rescue StandardError => e
     script_log_backtrace(script, job, e)
   end
@@ -61,7 +48,7 @@ def script_log_backtrace(script, job, e)
     msg += "#{i + 1}. #{e.backtrace[i]}\n"
   end
 
-  LOGGER.error("Error: #{script} [#{job}]\n\n#{msg}\n=> #{e.message}")
+  SCRIPT_LOGGER.error("Error: #{script} [#{job}]\n\n#{msg}\n=> #{e.message}")
 end
 
 ## Commands
@@ -150,7 +137,7 @@ CONTEXT_SCRIPT_KILL = CONTEXT_SCRIPT.add_command(
   end
 
   SCRIPT_JOBS[job][:thread].kill
-  LOGGER.log("Killed: #{SCRIPT_JOBS[job][:script]} [#{job}]")
+  SCRIPT_LOGGER.log("Killed: #{SCRIPT_JOBS[job][:script]} [#{job}]")
   script = SCRIPT_JOBS[job][:script]
   name = script.capitalize
   SCRIPT_JOBS.delete(job)
@@ -181,7 +168,7 @@ CONTEXT_SCRIPT_ADMIN = CONTEXT_SCRIPT.add_command(
   end
 
   shell.puts('Enter ! or ^D to quit')
-  prompt = ColorTerm.blue.bold("#{SCRIPT_JOBS[job][:script]}:#{job} #{SCRIPT_LOG_CHAR} ")
+  prompt = "#{SCRIPT_JOBS[job][:script]}:#{job} #{SCRIPT_LOG_CHAR} "
   loop do
     line = shell.readline(prompt, true)
     if line.nil?
@@ -195,7 +182,7 @@ CONTEXT_SCRIPT_ADMIN = CONTEXT_SCRIPT.add_command(
     break if line == '!'
 
     unless SCRIPT_JOBS.key?(job)
-      LOGGER.error("Job #{job} was terminated")
+      SCRIPT_LOGGER.error("Job #{job} was terminated")
       break
     end
 
@@ -203,7 +190,7 @@ CONTEXT_SCRIPT_ADMIN = CONTEXT_SCRIPT.add_command(
     next if msg.nil? || msg.empty?
 
     shell.puts(msg)
-    # ✅ Protección contra refresh_line
+    # ✅ ÚNICA PROTECCIÓN QUE SE MANTIENE
     begin
       Readline.refresh_line if Readline.respond_to?(:refresh_line)
     rescue StandardError; end
