@@ -10,6 +10,9 @@ SCRIPT_VARS = {
 
 SCRIPT_LOG_CHAR = "\u273f"
 
+# ✅ SOLO definimos la variable, NO le configuramos colores al inicio
+SCRIPT_LOGGER = LOGGER
+
 def script_run(shell, script, args)
   job = SCRIPT_VARS[:job_counter] += 1
   SCRIPT_JOBS[job] = {
@@ -19,7 +22,6 @@ def script_run(shell, script, args)
 
   file = File.join(SCRIPT_DIR, "#{script}#{SCRIPT_EXT}")
 
-  # ✅ Usamos el logger que ya viene configurado, sin redefinir colores
   logger = Sandbox::Logger.new(shell)
 
   begin
@@ -190,7 +192,7 @@ CONTEXT_SCRIPT_ADMIN = CONTEXT_SCRIPT.add_command(
     next if msg.nil? || msg.empty?
 
     shell.puts(msg)
-    # ✅ ÚNICA PROTECCIÓN QUE SE MANTIENE
+    # ✅ Protección necesaria
     begin
       Readline.refresh_line if Readline.respond_to?(:refresh_line)
     rescue StandardError; end
