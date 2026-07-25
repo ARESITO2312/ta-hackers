@@ -166,16 +166,6 @@ CONTEXT_SCRIPT_ADMIN = CONTEXT_SCRIPT.add_command(
     msg = SCRIPT_JOBS[job][:instance].admin(line)
     next if msg.nil? || msg.empty?
     shell.puts(msg)
-    # ✅ PROTECCIÓN FINAL: SI NO EXISTE LA FUNCIÓN, NO HACE NADA
-    begin
-      if defined?(Readline)&.respond_to?(:refresh_line)
-        Readline.refresh_line
-      elsif defined?(Reline)&.respond_to?(:refresh_line)
-        Reline.refresh_line
-      end
-    rescue StandardError
-      nil
-    end
   end
 end
 
