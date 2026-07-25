@@ -3,7 +3,6 @@
 require 'io/console'
 require 'rbconfig'
 
-# ✅ ESTA CLASE FALTABA O SE ROMPIÓ
 module Sandbox
   class Config
     def initialize(file)
@@ -18,6 +17,11 @@ module Sandbox
 
     def []=(key, value)
       @data[key.to_s] = value
+    end
+
+    # ✅ MÉTODO QUE FALTABA: verifica si existe la clave
+    def key?(key)
+      @data.key?(key.to_s)
     end
 
     def load
@@ -49,7 +53,7 @@ module Sandbox
       line = +""
       line << "#{logPrefixCterm}#{logPrefix}#{ColorTerm.reset}#{logCterm}#{message}#{ColorTerm.reset}"
       @shell.puts(line)
-      # ✅ PROTECCIÓN DEFINITIVA
+      # ✅ Protección definitiva
       begin
         if defined?(Readline)&.respond_to?(:refresh_line)
           Readline.refresh_line if @reading
@@ -65,7 +69,6 @@ module Sandbox
       line = +""
       line << "#{errorPrefixCterm}#{errorPrefix}#{ColorTerm.reset}#{errorCterm}#{message}#{ColorTerm.reset}"
       @shell.puts(line)
-      # ✅ MISMA PROTECCIÓN
       begin
         if defined?(Readline)&.respond_to?(:refresh_line)
           Readline.refresh_line if @reading
@@ -81,7 +84,6 @@ module Sandbox
       line = +""
       line << "#{infoPrefixCterm}#{infoPrefix}#{ColorTerm.reset}#{infoCterm}#{message}#{ColorTerm.reset}"
       @shell.puts(line)
-      # ✅ MISMA PROTECCIÓN
       begin
         if defined?(Readline)&.respond_to?(:refresh_line)
           Readline.refresh_line if @reading
