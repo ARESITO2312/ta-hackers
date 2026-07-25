@@ -19,7 +19,6 @@ module Sandbox
       @data[key.to_s] = value
     end
 
-    # ✅ MÉTODO QUE FALTABA: verifica si existe la clave
     def key?(key)
       @data.key?(key.to_s)
     end
@@ -41,9 +40,10 @@ module Sandbox
   end
 
   class Logger
-    attr_accessor :logPrefix, :logPrefixCterm, :logCterm
-    attr_accessor :errorPrefix, :errorPrefixCterm, :errorCterm
-    attr_accessor :infoPrefix, :infoPrefixCterm, :infoCterm
+    # ✅ AGREGAMOS TODOS LOS ATRIBUTOS QUE USA EL PROGRAMA ORIGINAL
+    attr_accessor :logPrefix, :logPrefixCterm, :logCterm, :logSuffix
+    attr_accessor :errorPrefix, :errorPrefixCterm, :errorCterm, :errorSuffix
+    attr_accessor :infoPrefix, :infoPrefixCterm, :infoCterm, :infoSuffix
 
     def initialize(shell)
       @shell = shell
@@ -51,9 +51,8 @@ module Sandbox
 
     def log(message)
       line = +""
-      line << "#{logPrefixCterm}#{logPrefix}#{ColorTerm.reset}#{logCterm}#{message}#{ColorTerm.reset}"
+      line << "#{logPrefixCterm}#{logPrefix}#{ColorTerm.reset}#{logCterm}#{message}#{ColorTerm.reset}#{logSuffix}"
       @shell.puts(line)
-      # ✅ Protección definitiva
       begin
         if defined?(Readline)&.respond_to?(:refresh_line)
           Readline.refresh_line if @reading
@@ -67,7 +66,7 @@ module Sandbox
 
     def error(message)
       line = +""
-      line << "#{errorPrefixCterm}#{errorPrefix}#{ColorTerm.reset}#{errorCterm}#{message}#{ColorTerm.reset}"
+      line << "#{errorPrefixCterm}#{errorPrefix}#{ColorTerm.reset}#{errorCterm}#{message}#{ColorTerm.reset}#{errorSuffix}"
       @shell.puts(line)
       begin
         if defined?(Readline)&.respond_to?(:refresh_line)
@@ -82,7 +81,7 @@ module Sandbox
 
     def info(message)
       line = +""
-      line << "#{infoPrefixCterm}#{infoPrefix}#{ColorTerm.reset}#{infoCterm}#{message}#{ColorTerm.reset}"
+      line << "#{infoPrefixCterm}#{infoPrefix}#{ColorTerm.reset}#{infoCterm}#{message}#{ColorTerm.reset}#{infoSuffix}"
       @shell.puts(line)
       begin
         if defined?(Readline)&.respond_to?(:refresh_line)
