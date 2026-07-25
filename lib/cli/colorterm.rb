@@ -1,47 +1,55 @@
-# frozen_string_literal: true
+  class Logger
+    # ✅ TODOS LOS ATRIBUTOS EXACTOS QUE USA EL PROGRAMA
+    attr_accessor :logPrefix, :logPrefixCterm, :logCterm, :logSuffix
+    attr_accessor :errorPrefix, :errorPrefixCterm, :errorCterm, :errorSuffix
+    attr_accessor :infoPrefix, :infoPrefixCterm, :infoCterm, :infoSuffix
 
-module ColorTerm
-  RESET = "\e[0m"
+    def initialize(shell)
+      @shell = shell
+    end
 
-  # Colores básicos
-  BLACK   = "\e[30m"
-  RED     = "\e[31m"
-  GREEN   = "\e[32m"
-  YELLOW  = "\e[33m"
-  BLUE    = "\e[34m"
-  MAGENTA = "\e[35m"
-  CYAN    = "\e[36m"
-  BROWN   = "\e[33m"
-  WHITE   = "\e[37m"
+    def log(message)
+      line = +""
+      line << "#{logPrefixCterm}#{logPrefix}#{ColorTerm.reset}#{logCterm}#{message}#{ColorTerm.reset}#{logSuffix}"
+      @shell.puts(line)
+      begin
+        if defined?(Readline)&.respond_to?(:refresh_line)
+          Readline.refresh_line if @reading
+        elsif defined?(Reline)&.respond_to?(:refresh_line)
+          Reline.refresh_line if @reading
+        end
+      rescue StandardError
+        nil
+      end
+    end
 
-  def self.black;   BLACK;   end
-  def self.red;     RED;     end
-  def self.green;   GREEN;   end
-  def self.yellow;  YELLOW;  end
-  def self.blue;    BLUE;    end
-  def self.magenta; MAGENTA; end
-  def self.cyan;    CYAN;    end
-  def self.brown;   BROWN;   end
-  def self.white;   WHITE;   end
-  def self.reset;   RESET;   end
+    def error(message)
+      line = +""
+      line << "#{errorPrefixCterm}#{errorPrefix}#{ColorTerm.reset}#{errorCterm}#{message}#{ColorTerm.reset}#{errorSuffix}"
+      @shell.puts(line)
+      begin
+        if defined?(Readline)&.respond_to?(:refresh_line)
+          Readline.refresh_line if @reading
+        elsif defined?(Reline)&.respond_to?(:refresh_line)
+          Reline.refresh_line if @reading
+        end
+      rescue StandardError
+        nil
+      end
+    end
 
-  # Clase para estilos
-  class ColorString < String
-    def bold;      "\e[1m#{self}"; end
-    def underline; "\e[4m#{self}"; end
-    def blink;     "\e[5m#{self}"; end
+    def info(message)
+      line = +""
+      line << "#{infoPrefixCterm}#{infoPrefix}#{ColorTerm.reset}#{infoCterm}#{message}#{ColorTerm.reset}#{infoSuffix}"
+      @shell.puts(line)
+      begin
+        if defined?(Readline)&.respond_to?(:refresh_line)
+          Readline.refresh_line if @reading
+        elsif defined?(Reline)&.respond_to?(:refresh_line)
+          Reline.refresh_line if @reading
+        end
+      rescue StandardError
+        nil
+      end
+    end
   end
-
-  # Métodos que devuelven la cadena con estilo
-  class << self
-    def black_bold;   ColorString.new(BLACK).bold;   end
-    def red_bold;     ColorString.new(RED).bold;     end
-    def green_bold;   ColorString.new(GREEN).bold;   end
-    def yellow_bold;  ColorString.new(YELLOW).bold;  end
-    def blue_bold;    ColorString.new(BLUE).bold;    end
-    def magenta_bold; ColorString.new(MAGENTA).bold; end
-    def cyan_bold;    ColorString.new(CYAN).bold;    end
-    def brown_bold;   ColorString.new(BROWN).bold;   end
-    def white_bold;   ColorString.new(WHITE).bold;   end
-  end
-end
