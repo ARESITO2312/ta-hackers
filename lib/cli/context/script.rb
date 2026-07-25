@@ -11,12 +11,13 @@ SCRIPT_VARS = {
 SCRIPT_LOG_CHAR = "\u273f"
 
 SCRIPT_LOGGER = Sandbox::Logger.new(SHELL)
-SCRIPT_LOGGER.log_prefix = "\u273f "
-SCRIPT_LOGGER.log_prefix_cterm = ColorTerm.blue.bold
-SCRIPT_LOGGER.log_cterm = ColorTerm.blue
-SCRIPT_LOGGER.error_prefix = "\u273f "
-SCRIPT_LOGGER.error_prefix_cterm = ColorTerm.red.bold
-SCRIPT_LOGGER.error_cterm = ColorTerm.red
+# ✅ CORREGIDO: logPrefix= en lugar de log_prefix=
+SCRIPT_LOGGER.logPrefix = "\u273f "
+SCRIPT_LOGGER.logPrefixCterm = ColorTerm.blue.bold
+SCRIPT_LOGGER.logCterm = ColorTerm.blue
+SCRIPT_LOGGER.errorPrefix = "\u273f "
+SCRIPT_LOGGER.errorPrefixCterm = ColorTerm.red.bold
+SCRIPT_LOGGER.errorCterm = ColorTerm.red
 
 def script_run(shell, script, args)
   job = SCRIPT_VARS[:job_counter] += 1
@@ -28,15 +29,16 @@ def script_run(shell, script, args)
   file = File.join(SCRIPT_DIR, "#{script}#{SCRIPT_EXT}")
 
   logger = Sandbox::Logger.new(shell)
-  logger.log_prefix = "\u276f [#{script}] "
-  logger.log_prefix_cterm = ColorTerm.cyan.bold
-  logger.log_cterm = ColorTerm.cyan
-  logger.error_prefix = "\u276f [#{script}] "
-  logger.error_prefix_cterm = ColorTerm.red.bold
-  logger.error_cterm = ColorTerm.red
-  logger.info_prefix = "\u276f [#{script}] "
-  logger.info_prefix_cterm = ColorTerm.white.bold
-  logger.info_cterm = ColorTerm.white
+  # ✅ MISMA CORRECCIÓN en el logger interno
+  logger.logPrefix = "\u276f [#{script}] "
+  logger.logPrefixCterm = ColorTerm.cyan.bold
+  logger.logCterm = ColorTerm.cyan
+  logger.errorPrefix = "\u276f [#{script}] "
+  logger.errorPrefixCterm = ColorTerm.red.bold
+  logger.errorCterm = ColorTerm.red
+  logger.infoPrefix = "\u276f [#{script}] "
+  logger.infoPrefixCterm = ColorTerm.white.bold
+  logger.infoCterm = ColorTerm.white
 
   begin
     name = script.capitalize
@@ -206,11 +208,10 @@ CONTEXT_SCRIPT_ADMIN = CONTEXT_SCRIPT.add_command(
     next if msg.nil? || msg.empty?
 
     shell.puts(msg)
-    # === ÚNICO CAMBIO: SOLO ESTA PROTECCIÓN ===
+    # ✅ Protección contra refresh_line
     begin
       Readline.refresh_line if Readline.respond_to?(:refresh_line)
     rescue StandardError; end
-    # === FIN DEL CAMBIO ===
   end
 end
 
