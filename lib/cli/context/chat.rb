@@ -32,22 +32,22 @@ module Hackers
               @room.read.each do |msg|
                 next if msg.message.to_s.strip.empty?
 
-                puts format_message(msg)
+                puts "[#{msg.datetime}] #{msg.name}: #{msg.message}"
                 # Protección segura para la función que falla
                 if @reading
                   begin
                     Readline.refresh_line if Readline.respond_to?(:refresh_line)
                   rescue StandardError
-                    # Ignora el error sin detener el programa
+                    # Ignora sin romper
                   end
                 end
               end
-            rescue StandardError => e
-              puts "⚠️ Error en el chat: #{e.message}"
+            rescue StandardError
               sleep 1
+              next
             end
 
-            sleep 0.5
+            sleep 0.3
           end
         end
 
@@ -64,23 +64,15 @@ module Hackers
             input.strip!
             next if input.empty?
 
-            if input.downcase == 'exit'
-              terminate
-              break
-            end
+            terminate if input.downcase == 'exit'
+            break if terminated?
 
             begin
               @room.send(input)
-            rescue StandardError => e
-              puts "❌ No se pudo enviar: #{e.message}"
+            rescue StandardError
+              puts "❌ No se pudo enviar el mensaje"
             end
           end
-        end
-
-        private
-
-        def format_message(msg)
-          "[#{msg.datetime}] #{msg.name} (#{msg.rank}): #{msg.message}"
         end
       end
     end
