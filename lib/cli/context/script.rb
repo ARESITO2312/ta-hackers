@@ -10,14 +10,8 @@ SCRIPT_VARS = {
 
 SCRIPT_LOG_CHAR = "\u273f"
 
-SCRIPT_LOGGER = Sandbox::Logger.new(SHELL)
-# ✅ CORREGIDO: logPrefix= en lugar de log_prefix=
-SCRIPT_LOGGER.logPrefix = "\u273f "
-SCRIPT_LOGGER.logPrefixCterm = ColorTerm.blue.bold
-SCRIPT_LOGGER.logCterm = ColorTerm.blue
-SCRIPT_LOGGER.errorPrefix = "\u273f "
-SCRIPT_LOGGER.errorPrefixCterm = ColorTerm.red.bold
-SCRIPT_LOGGER.errorCterm = ColorTerm.red
+# ✅ ELIMINAMOS la configuración global del logger aquí, se hace después o ya existe
+# ✅ Dejamos solo lo que es seguro sin depender de clases que no cargaron
 
 def script_run(shell, script, args)
   job = SCRIPT_VARS[:job_counter] += 1
@@ -29,7 +23,7 @@ def script_run(shell, script, args)
   file = File.join(SCRIPT_DIR, "#{script}#{SCRIPT_EXT}")
 
   logger = Sandbox::Logger.new(shell)
-  # ✅ MISMA CORRECCIÓN en el logger interno
+  # ✅ Aquí sí ya está cargado ColorTerm, y usamos los nombres CORRECTOS (camelCase)
   logger.logPrefix = "\u276f [#{script}] "
   logger.logPrefixCterm = ColorTerm.cyan.bold
   logger.logCterm = ColorTerm.cyan
@@ -48,8 +42,9 @@ def script_run(shell, script, args)
     SCRIPT_JOBS[job][:instance] = Object.const_get(name).new(GAME, shell, logger, args)
     SCRIPT_JOBS[job][:instance].main
     SCRIPT_JOBS[job][:instance].finish
-    SCRIPT_LOGGER.log("Run: #{script} [#{job}]")
-    SCRIPT_LOGGER.log("Done: #{script} [#{job}]")
+    # ✅ Usamos el logger global ya existente, no lo definimos aquí
+    LOGGER.log("Run: #{script} [#{job}]")
+    LOGGER.log("Done: #{script} [#{job}]")
   rescue StandardError => e
     script_log_backtrace(script, job, e)
   end
@@ -66,7 +61,7 @@ def script_log_backtrace(script, job, e)
     msg += "#{i + 1}. #{e.backtrace[i]}\n"
   end
 
-  SCRIPT_LOGGER.error("Error: #{script} [#{job}]\n\n#{msg}\n=> #{e.message}")
+  LOGGER.error("Error: #{script} [#{job}]\n\n#{msg}\n=> #{e.message}")
 end
 
 ## Commands
@@ -155,7 +150,7 @@ CONTEXT_SCRIPT_KILL = CONTEXT_SCRIPT.add_command(
   end
 
   SCRIPT_JOBS[job][:thread].kill
-  SCRIPT_LOGGER.log("Killed: #{SCRIPT_JOBS[job][:script]} [#{job}]")
+  LOGGER.log("Killed: #{SCRIPT_JOBS[job][:script]} [#{job}]")
   script = SCRIPT_JOBS[job][:script]
   name = script.capitalize
   SCRIPT_JOBS.delete(job)
@@ -200,7 +195,7 @@ CONTEXT_SCRIPT_ADMIN = CONTEXT_SCRIPT.add_command(
     break if line == '!'
 
     unless SCRIPT_JOBS.key?(job)
-      SCRIPT_LOGGER.error("Job #{job} was terminated")
+      LOGGER.error("Job #{job} was terminated")
       break
     end
 
