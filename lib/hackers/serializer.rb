@@ -18,17 +18,18 @@ module Hackers
     ##
     # Normalizes data - special characters substitution
     def self.normalizeData(data, dir = true)
+      return '' if data.nil? || data.to_s.empty?
+      safe_data = data.to_s.dup
       if dir
-        data&.gsub!(DELIM_SPEC_FIELD, DELIM_FIELD)
-        data&.gsub!(DELIM_SPEC_RECORD, DELIM_RECORD)
-        data&.gsub!(DELIM_SPEC_SECTION, DELIM_SECTION)
+        safe_data.gsub!(DELIM_SPEC_FIELD, DELIM_FIELD)
+        safe_data.gsub!(DELIM_SPEC_RECORD, DELIM_RECORD)
+        safe_data.gsub!(DELIM_SPEC_SECTION, DELIM_SECTION)
       else
-        data&.gsub!(DELIM_FIELD, DELIM_SPEC_FIELD)
-        data&.gsub!(DELIM_RECORD, DELIM_SPEC_RECORD)
-        data&.gsub!(DELIM_SECTION, DELIM_SPEC_SECTION)
+        safe_data.gsub!(DELIM_FIELD, DELIM_SPEC_FIELD)
+        safe_data.gsub!(DELIM_RECORD, DELIM_SPEC_RECORD)
+        safe_data.gsub!(DELIM_SECTION, DELIM_SPEC_SECTION)
       end
-
-      data
+      safe_data
     end
 
     ##
@@ -36,7 +37,6 @@ module Hackers
     def self.parseData(data, delim1 = DELIM_SECTION, delim2 = DELIM_RECORD, delim3 = DELIM_FIELD)
       array = []
       begin
-        # Limpia caracteres inválidos antes de procesar
         safe_data = data.to_s.dup.force_encoding('UTF-8').scrub
         safe_data.split(delim1).each.with_index do |section, i|
           array[i] = [] if array[i].nil?
@@ -50,7 +50,6 @@ module Hackers
       rescue StandardError
         return array
       end
-
       array
     end
 
@@ -69,7 +68,6 @@ module Hackers
       attr_reader :fields
 
       def initialize(data = nil)
-        # Limpia datos al recibirlos
         @data = data.to_s.dup.force_encoding('UTF-8').scrub
         @fields = []
         split
@@ -111,7 +109,6 @@ module Hackers
       private
 
       def split
-        # Ya usamos @data limpio desde initialize
         @data.split(DELIM_SECTION_NORM).each_with_index do |section, i|
           @fields[i] ||= []
           section.split(DELIM_RECORD_NORM).each_with_index do |record, j|
