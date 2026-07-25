@@ -41,20 +41,23 @@ module Hackers
     def parse
       data = Serializer.parseData(@raw_data)
 
-      data[0][0..10].each do |record|
-        @settings[record[1]] = record[2] =~ /^\d+$/ ? record[2].to_i : record[2]
-      end
+      # Solo procesa si data y data[0] existen
+      if data && data[0]
+        data[0][0..10].each do |record|
+          @settings[record[1]] = record[2] =~ /^\d+$/ ? record[2].to_i : record[2]
+        end
 
-      @datetime = data[0][11][0]
+        @datetime = data[0][11][0]
 
-      languages = data[0][12]
-      languages.each do |language|
-        code, value = language.split(':', 2)
-        @languages[code] = value.to_i
-      end
+        languages = data[0][12]
+        languages.each do |language|
+          code, value = language.split(':', 2)
+          @languages[code] = value.to_i
+        end
 
-      data[0][13..].each do |record|
-        @settings[record[0]] = record[1] =~ /^\d+$/ ? record[1].to_i : record[1]
+        data[0][13..].each do |record|
+          @settings[record[0]] = record[1] =~ /^\d+$/ ? record[1].to_i : record[1]
+        end
       end
     end
   end
