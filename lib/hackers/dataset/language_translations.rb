@@ -28,11 +28,14 @@ module Hackers
     private
 
     def parse
-      data = Serializer.parseData(@raw_data)
-
-      data[0].each do |record|
-        @translations[record[0]] = record[1]
-      end
+  data = Serializer.parseData(@raw_data)
+  # Solo si existen datos, los recorre
+  if data.is_a?(Array) && !data.empty? && data[0].is_a?(Array)
+    data[0].each do |record|
+      @translations[record[0]] = record[1]
     end
+  else
+    # Si no hay datos, usa un arreglo vacío y no se cae
+    puts "⚠️ No se cargaron traducciones, usando valores por defecto"
   end
 end
