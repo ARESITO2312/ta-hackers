@@ -9,8 +9,6 @@ SCRIPT_VARS = {
 }
 
 SCRIPT_LOG_CHAR = "\u273f"
-
-# ✅ SOLO definimos la variable, NO le configuramos colores al inicio
 SCRIPT_LOGGER = LOGGER
 
 def script_run(shell, script, args)
@@ -21,7 +19,6 @@ def script_run(shell, script, args)
   }
 
   file = File.join(SCRIPT_DIR, "#{script}#{SCRIPT_EXT}")
-
   logger = Sandbox::Logger.new(shell)
 
   begin
@@ -49,7 +46,6 @@ def script_log_backtrace(script, job, e)
   (e.backtrace.length - 1).downto(0) do |i|
     msg += "#{i + 1}. #{e.backtrace[i]}\n"
   end
-
   SCRIPT_LOGGER.error("Error: #{script} [#{job}]\n\n#{msg}\n=> #{e.message}")
 end
 
@@ -62,13 +58,11 @@ CONTEXT_SCRIPT_RUN = CONTEXT_SCRIPT.add_command(
   params: ['<name>']
 ) do |tokens, shell|
   script = tokens[1]
-
   file = File.join(SCRIPT_DIR, "#{script}#{SCRIPT_EXT}")
   unless File.file?(file)
     shell.puts('No such script')
     next
   end
-
   Thread.new { script_run(shell, script, tokens[2..]) }
 end
 
@@ -87,20 +81,15 @@ CONTEXT_SCRIPT.add_command(
   Dir.children(SCRIPT_DIR).sort.each do |child|
     file = File.join(SCRIPT_DIR, child)
     next unless File.file?(file) && child.end_with?(SCRIPT_EXT)
-
     child.delete_suffix!(SCRIPT_EXT)
     scripts << child
   end
-
   if scripts.empty?
     shell.puts('No scripts')
     next
   end
-
   shell.puts('Scripts:')
-  scripts.each do |script|
-    shell.puts(" #{script}")
-  end
+  scripts.each { |s| shell.puts(" #{s}") }
 end
 
 # jobs
@@ -112,11 +101,8 @@ CONTEXT_SCRIPT.add_command(
     shell.puts('No active jobs')
     next
   end
-
   shell.puts('Active jobs:')
-  SCRIPT_JOBS.each do |k, v|
-    shell.puts(format(' [%d] %s', k, v[:script]))
-  end
+  SCRIPT_JOBS.each { |k,v| shell.puts(format(' [%d] %s', k, v[:script])) }
 end
 
 # kill
@@ -126,18 +112,15 @@ CONTEXT_SCRIPT_KILL = CONTEXT_SCRIPT.add_command(
   params: ['<id>']
 ) do |tokens, shell|
   job = tokens[1].to_i
-
   unless SCRIPT_JOBS.key?(job)
     shell.puts('No such job')
     next
   end
-
   begin
     SCRIPT_JOBS[job][:instance].finish
   rescue StandardError => e
-    script_log_backtrace(script, job, e)
+    script_log_backtrace(SCRIPT_JOBS[job][:script], job, e)
   end
-
   SCRIPT_JOBS[job][:thread].kill
   SCRIPT_LOGGER.log("Killed: #{SCRIPT_JOBS[job][:script]} [#{job}]")
   script = SCRIPT_JOBS[job][:script]
@@ -147,8 +130,7 @@ CONTEXT_SCRIPT_KILL = CONTEXT_SCRIPT.add_command(
 end
 
 CONTEXT_SCRIPT_KILL.completion do |line|
-  jobs = SCRIPT_JOBS.keys.map(&:to_s)
-  jobs.grep(/^#{Regexp.escape(line)}/)
+  SCRIPT_JOBS.keys.map(&:to_s).grep(/^#{Regexp.escape(line)}/)
 end
 
 # admin
@@ -158,17 +140,14 @@ CONTEXT_SCRIPT_ADMIN = CONTEXT_SCRIPT.add_command(
   params: ['<id>']
 ) do |tokens, shell|
   job = tokens[1].to_i
-
   unless SCRIPT_JOBS.key?(job)
     shell.puts('No such job')
     next
   end
-
   unless SCRIPT_JOBS[job][:instance].respond_to?(:admin)
     shell.puts('Not implemented')
     next
   end
-
   shell.puts('Enter ! or ^D to quit')
   prompt = "#{SCRIPT_JOBS[job][:script]}:#{job} #{SCRIPT_LOG_CHAR} "
   loop do
@@ -177,29 +156,29 @@ CONTEXT_SCRIPT_ADMIN = CONTEXT_SCRIPT.add_command(
       shell.puts
       break
     end
-
     line.strip!
     next if line.empty?
-
     break if line == '!'
-
     unless SCRIPT_JOBS.key?(job)
       SCRIPT_LOGGER.error("Job #{job} was terminated")
       break
     end
-
     msg = SCRIPT_JOBS[job][:instance].admin(line)
     next if msg.nil? || msg.empty?
-
     shell.puts(msg)
-    # ✅ Protección necesaria
+    # ✅ PROTECCIÓN FINAL: SI NO EXISTE LA FUNCIÓN, NO HACE NADA
     begin
-      Readline.refresh_line if Readline.respond_to?(:refresh_line)
-    rescue StandardError; end
+      if defined?(Readline)&.respond_to?(:refresh_line)
+        Readline.refresh_line
+      elsif defined?(Reline)&.respond_to?(:refresh_line)
+        Reline.refresh_line
+      end
+    rescue StandardError
+      nil
+    end
   end
 end
 
 CONTEXT_SCRIPT_ADMIN.completion do |line|
-  jobs = SCRIPT_JOBS.keys.map(&:to_s)
-  jobs.grep(/^#{Regexp.escape(line)}/)
+  SCRIPT_JOBS.keys.map(&:to_s).grep(/^#{Regexp.escape(line)}/)
 end
