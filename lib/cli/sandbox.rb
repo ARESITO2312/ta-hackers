@@ -1,81 +1,86 @@
 # frozen_string_literal: true
 
-require 'json'
+require 'io/console'
 
-module Sandbox
-  ##
-  # Config
-  class Config < Hash
-    attr_accessor :file
+class Sandbox::Logger
+  attr_accessor :logPrefix, :logPrefixCterm, :logCterm
+  attr_accessor :errorPrefix, :errorPrefixCterm, :errorCterm
+  attr_accessor :infoPrefix, :infoPrefixCterm, :infoCterm
 
-    def initialize(file)
-      super
-      @file = file
-    end
+  def initialize(shell)
+    @shell = shell
+  end
 
-    def load
-      data = JSON.parse(File.read(@file))
-      return unless data.instance_of?(Hash)
-
-      merge!(data)
-    end
-
-    def save
-      File.write(@file, JSON.pretty_generate(self))
+  def log(message)
+    line = +""
+    line << "#{logPrefixCterm}#{logPrefix}#{ColorTerm.reset}#{logCterm}#{message}#{ColorTerm.reset}"
+    @shell.puts(line)
+    # ✅ PROTECCIÓN DEFINITIVA AQUÍ
+    begin
+      if defined?(Readline)&.respond_to?(:refresh_line)
+        Readline.refresh_line if @reading
+      elsif defined?(Reline)&.respond_to?(:refresh_line)
+        Reline.refresh_line if @reading
+      end
+    rescue StandardError
+      nil
     end
   end
 
-  ##
-  # Logger
-  class Logger
-    attr_accessor :logPrefix, :errorPrefix, :infoPrefix,
-                  :logSuffix, :errorSuffix, :infoSuffix
-
-    def initialize(shell)
-      @shell = shell
-      @logPrefix = String.new
-      @logSuffix = String.new
-      @errorPrefix = String.new
-      @errorSuffix = String.new
-      @infoPrefix = String.new
-      @infoSuffix = String.new
-    end
-
-    def log(message)
-      @shell.puts(@logPrefix + message.to_s + @logSuffix)
-    end
-
-    def error(message)
-      @shell.puts(@errorPrefix + message.to_s + @errorSuffix)
-    end
-
-    def info(message)
-      @shell.puts(@infoPrefix + message.to_s + @infoSuffix)
+  def error(message)
+    line = +""
+    line << "#{errorPrefixCterm}#{errorPrefix}#{ColorTerm.reset}#{errorCterm}#{message}#{ColorTerm.reset}"
+    @shell.puts(line)
+    # ✅ MISMA PROTECCIÓN AQUÍ
+    begin
+      if defined?(Readline)&.respond_to?(:refresh_line)
+        Readline.refresh_line if @reading
+      elsif defined?(Reline)&.respond_to?(:refresh_line)
+        Reline.refresh_line if @reading
+      end
+    rescue StandardError
+      nil
     end
   end
 
-  ##
-  # Parent class for scripts
-  class Script
-    ##
-    # Creates new script:
-    #   game    = Game
-    #   shell   = Shell
-    #   logger  = Logger
-    #   args    = Arguments
-    def initialize(game, shell, logger, args)
-      @game = game
-      @shell = shell
-      @logger = logger
-      @args = args
+  def info(message)
+    line = +""
+    line << "#{infoPrefixCterm}#{infoPrefix}#{ColorTerm.reset}#{infoCterm}#{message}#{ColorTerm.reset}"
+    @shell.puts(line)
+    # ✅ MISMA PROTECCIÓN AQUÍ
+    begin
+      if defined?(Readline)&.respond_to?(:refresh_line)
+        Readline.refresh_line if @reading
+      elsif defined?(Reline)&.respond_to?(:refresh_line)
+        Reline.refresh_line if @reading
+      end
+    rescue StandardError
+      nil
     end
+  end
+end
 
-    ##
-    # Script entry point
-    def main; end
+class Sandbox::Shell
+  def initialize(input = $stdin, output = $stdout)
+    @input = input
+    @output = output
+    @reading = false
+  end
 
-    ##
-    # Executes after the script finished
-    def finish; end
+  def puts(*args)
+    args.each do |line|
+      @output.puts(line)
+    end
+  end
+
+  def print(*args)
+    @output.print(*args)
+  end
+
+  def readline(prompt = "", add_history = false)
+    @reading = true
+    line = Readline.readline(prompt, add_history)
+    @reading = false
+    line
   end
 end
