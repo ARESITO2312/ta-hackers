@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
 require 'json'
-require 'cli/colorterm'
+# ✅ Solo cambiamos la ruta de carga
+require_relative 'colorterm'
 
 module Sandbox
   ##
@@ -17,7 +18,6 @@ module Sandbox
     def load
       data = JSON.parse(File.read(@file))
       return unless data.instance_of?(Hash)
-
       merge!(data)
     end
 
@@ -35,6 +35,7 @@ module Sandbox
 
     def initialize(shell)
       @shell = shell
+      @reading = false
       @log_cterm = ColorTerm.white
       @error_cterm = ColorTerm.white
       @info_cterm = ColorTerm.white
@@ -48,26 +49,50 @@ module Sandbox
 
     def log(message)
       @shell.puts(@log_prefix_cterm.get(@log_prefix) + @log_cterm.get(message.to_s))
+      # ✅ Protección contra el error de refresh_line
+      begin
+        if defined?(Readline)&.respond_to?(:refresh_line)
+          Readline.refresh_line if @reading
+        elsif defined?(Reline)&.respond_to?(:refresh_line)
+          Reline.refresh_line if @reading
+        end
+      rescue StandardError
+        nil
+      end
     end
 
     def error(message)
       @shell.puts(@error_prefix_cterm.get(@error_prefix) + @error_cterm.get(message.to_s))
+      # ✅ Misma protección
+      begin
+        if defined?(Readline)&.respond_to?(:refresh_line)
+          Readline.refresh_line if @reading
+        elsif defined?(Reline)&.respond_to?(:refresh_line)
+          Reline.refresh_line if @reading
+        end
+      rescue StandardError
+        nil
+      end
     end
 
     def info(message)
       @shell.puts(@info_prefix_cterm.get(@info_prefix) + @info_cterm.get(message.to_s))
+      # ✅ Misma protección
+      begin
+        if defined?(Readline)&.respond_to?(:refresh_line)
+          Readline.refresh_line if @reading
+        elsif defined?(Reline)&.respond_to?(:refresh_line)
+          Reline.refresh_line if @reading
+        end
+      rescue StandardError
+        nil
+      end
     end
   end
 
   ##
   # Parent class for scripts
   class Script
-    ##
-    # Creates new script:
-    #   game    = Game
-    #   shell   = Shell
-    #   logger  = Logger
-    #   args    = Arguments
     def initialize(game, shell, logger, args)
       @game = game
       @shell = shell
@@ -75,12 +100,7 @@ module Sandbox
       @args = args
     end
 
-    ##
-    # Script entry point
     def main; end
-
-    ##
-    # Executes after the script finished
     def finish; end
   end
 end
